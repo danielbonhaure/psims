@@ -14,6 +14,8 @@ def list_replace(arr, var, val, occ = nan, cnt = 1):
         elif isinstance(item, dict):
             cnt = dict_replace(item, var, val, occ = occ, cnt = cnt)
     return cnt
+
+
 def dict_replace(dic, var, val, occ = nan, cnt = 1):
     keys = dic.keys()
     for i in range(len(keys)):
@@ -28,6 +30,8 @@ def dict_replace(dic, var, val, occ = nan, cnt = 1):
                 dic[key] = val
             cnt += 1
     return cnt
+
+
 def convert_var(var, val):
     if var == 'pdate':
         day = int(round(val))
@@ -35,8 +39,12 @@ def convert_var(var, val):
     elif var == 'wst_id':
         val = 'WTH%05d' % val
     return val
+
+
 def get_obj(dic, key, dft):
     return dic[key] if key in dic else dft
+
+
 def repvals(vals, dimsizes, orders, order):
     def repeat_n(arr, n):
         arr2 = arr.copy()
@@ -51,6 +59,8 @@ def repvals(vals, dimsizes, orders, order):
     nbelow = prod(dimsizes[orders < order])
     dupvals = repeat_n(dupvals, nbelow)
     return dupvals
+
+
 def repvals2(vals, dimsizes, orders, order1, order2):
     if order2 < order1:
         vals = vals.T # make first dimension lower order
@@ -74,7 +84,7 @@ parser.add_option("--latidx", dest = "latidx", default = 1, type = "string",
                   help = "Latitude coordinate")
 parser.add_option("--lonidx", dest = "lonidx", default = 1, type = "string",
                   help = "Longitude coordinate")
-parser.add_option("-d", "--delta", dest = "delta", default = 30, type = "string",
+parser.add_option("-d", "--delta", dest = "delta", default = "30", type = "str",
                   help = "Distance(s) between each latitude/longitude grid cell in arcminutes")
 parser.add_option("-r", "--ref_year", dest = "ref_year", default = 1958, type = "int",
                   help = "Reference year from which to record times")
@@ -119,12 +129,24 @@ dict_replace(template, 'site_name', str(lat) + ', ' + str(lon))
 dimensions = campaign.dimensions.keys()
 dimensions.remove('lat') # remove lat, lon
 dimensions.remove('lon')
+soil_layers = []
+if 'soil_layer' in dimensions:
+    # Check if the corresponding dimensional variable is defined.
+    if 'soil_layer' not in campaign.variables.keys():
+        raise Exception('Missing dimensional variable for soil_layer dimension.')
+    # Get the soil horizons/layers.
+    soil_layers = campaign.variables['soil_layer'][:]
+    # The soil layer dimension shouldn't be considered as scenario dimension,
+    # so we remove it temporarily.
+    dimensions.remove('soil_layer')
 ndims = len(dimensions)
 orders, dimsizes = zeros(ndims), zeros(ndims)
 for i in range(ndims): # order of dimension (1 = slowest moving, etc.) and dimension size
     dimvar = campaign.variables[dimensions[i]]
     orders[i] = int(dimvar.order) if 'order' in dimvar.ncattrs() else 1
     dimsizes[i] = dimvar.size
+# We add the soil_layer dimension as a valid one.
+dimensions.append('soil_layer')
 
 # number of scenarios
 num_scenarios = int(min(prod(dimsizes), options.nscens)) # limit to nscens
@@ -158,13 +180,23 @@ for var in variables:
     # get dimensions
     dim = list(v.dimensions) # tuple to list
 
+    # If this variable has the 'soil_layer' dimension associated,
+    # it will be treated differently.
+    is_soil_data = 'soil_layer' in dim
+
+
     # get variable array
     if v.ndim == 1:
-        if not dim[0] in dimensions:
-            raise Exception('Unrecognized dimension in variable %s' % var)
+        if is_soil_data:
+            var_array = v[:]
+            # Repeat the array of values for each scenario and put it inside an array.
+            var_array = [var_array for i in range(num_scenarios)]
+        else:
+            if not dim[0] in dimensions:
+                raise Exception('Unrecognized dimension in variable %s' % var)
 
-        dim_idx = dimensions.index(dim[0])
-        var_array = repvals(v[:], dimsizes, orders, orders[dim_idx])
+            dim_idx = dimensions.index(dim[0])
+            var_array = repvals(v[:], dimsizes, orders, orders[dim_idx])
     else:
         if not 'lat' in dim:
             raise Exception('Latitude dimension is missing')
@@ -173,22 +205,33 @@ for var in variables:
         dim.remove('lat')
         dim.remove('lon')
 
-        if v.ndim == 2:
-            var_array = resize(v[latidx, lonidx], num_scenarios) # duplicate for all scenarios
-        elif v.ndim == 3:
-            if not dim[0] in dimensions:
-                raise Exception('Unrecognized dimension in variable %s' % var)
+        if is_soil_data:
+            dim.remove('soil_layer')
 
-            dim_idx = dimensions.index(dim[0])
-            var_array = repvals(v[:, latidx, lonidx], dimsizes, orders, orders[dim_idx])
-        elif v.ndim == 4:
-            if not dim[0] in dimensions or not dim[1] in dimensions:
-                raise Exception('Unrecognized dimension in variable %s' % var)
+            if v.ndim == 3:
+                var_array = v[:, latidx, lonidx]
+                # Repeat the array of values for each scenario and put it inside an array.
+                var_array = [var_array for i in range(num_scenarios)]
+            elif v.ndim == 4:
+                var_array = v[:, :, latidx, lonidx]
 
-            dim_idx1, dim_idx2 = dimensions.index(dim[0]), dimensions.index(dim[1])
-            var_array = repvals2(v[:, :, latidx, lonidx], dimsizes, orders, orders[dim_idx1], orders[dim_idx2])
         else:
-            raise Exception('Data contain variables with improper dimensions')    
+            if v.ndim == 2:
+                var_array = resize(v[latidx, lonidx], num_scenarios) # duplicate for all scenarios
+            elif v.ndim == 3:
+                if not dim[0] in dimensions:
+                    raise Exception('Unrecognized dimension in variable %s' % var)
+
+                dim_idx = dimensions.index(dim[0])
+                var_array = repvals(v[:, latidx, lonidx], dimsizes, orders, orders[dim_idx])
+            elif v.ndim == 4:
+                if not dim[0] in dimensions or not dim[1] in dimensions:
+                    raise Exception('Unrecognized dimension in variable %s' % var)
+
+                dim_idx1, dim_idx2 = dimensions.index(dim[0]), dimensions.index(dim[1])
+                var_array = repvals2(v[:, :, latidx, lonidx], dimsizes, orders, orders[dim_idx1], orders[dim_idx2])
+            else:
+                raise Exception('Data contain variables with improper dimensions')
 
     # limit to nscens
     var_array = var_array[: num_scenarios]
@@ -199,19 +242,20 @@ for var in variables:
     # get missing and fill values, if available
     fill_value = v._FillValue if '_FillValue' in attrs else nan
     missing_value = v.missing_value if 'missing_value' in attrs else nan
-
-    # get mapping, if available
     is_mapping = False
-    if 'units' in attrs and v.units == 'Mapping' and 'long_name' in attrs:
-        mapping = v.long_name.split(',')
-        is_mapping = True
 
-    # get replacement number
-    occ = nan # indicates to replace all instances of key
-    nums = re.findall('.*_(\d+)', var)
-    if nums != []:
-        var = re.sub('_\d+', '', var) # remove number
-        occ = int(nums[0])
+    if not is_soil_data:
+        # get mapping, if available
+        if 'units' in attrs and v.units == 'Mapping' and 'long_name' in attrs:
+            mapping = v.long_name.split(',')
+            is_mapping = True
+
+        # get replacement number
+        occ = nan # indicates to replace all instances of key
+        nums = re.findall('.*_(\d+)', var)
+        if nums != []:
+            var = re.sub('_\d+', '', var) # remove number
+            occ = int(nums[0])
 
     # iterate over scenarios
     if len(var_array) != num_scenarios:
@@ -219,17 +263,49 @@ for var in variables:
     for j in range(num_scenarios):
         val = var_array[j]
 
-        if val == fill_value or val == missing_value:
-            continue
+        # If this variable is related with the soil_layer dimension, "val" will be an array.
+        # Therefore, replacements should be done only in sections with soil layer arrays and
+        # element by element.
+        if is_soil_data:
+            # We remove missing values from the array.
+            val = val[val != fill_value]
+            val = val[val != missing_value]
+            # If there are no more elements after removing missing data, we skip this variable.
+            if val.size == 0:
+                continue
 
-        if is_mapping:
-            val = mapping[int(val - 1)]
+            if var.startswith('ic'):
+                soil_layers = exp['experiments'][j]["initial_conditions"]["soilLayer"]
+            else:
+                soil_layers = exp['experiments'][j]["soil"]["soilAnalysis"]
 
-        # convert variable to different representation, if necessary
-        val_old = val
-        val = convert_var(var, val)
+            size_diff = len(soil_layers) - len(val)
 
-        dict_replace(exp['experiments'][j], var, str(val), occ = occ) # make sure val is str!
+            # If there are less soil layers than values, we must enlarge the soil layers array.
+            if size_diff < 0:
+                for i in range(abs(size_diff)):
+                    soil_layers.append({})
+            elif size_diff > 0:
+                # We must shrink the amount of soil layers.
+                del soil_layers[-size_diff:]
+
+            for i in range(len(soil_layers)):
+                # We replace or create each layer value with the new value.
+                soil_layers[i][var] = str(val[i])
+
+        else:
+            # Otherwise, we process this variable as a single value.
+            if val == fill_value or val == missing_value:
+                continue
+
+            if is_mapping:
+                val = mapping[int(val - 1)]
+
+            # convert variable to different representation, if necessary
+            val_old = val
+            val = convert_var(var, val)
+
+            dict_replace(exp['experiments'][j], var, str(val), occ = occ) # make sure val is str!
 
         # SPECIAL CASE FOR APSIM!
         # CHANGE EDATE TO PDATE - 30 days

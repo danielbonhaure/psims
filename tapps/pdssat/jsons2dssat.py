@@ -4,6 +4,7 @@
 import json
 import warnings
 import datetime
+from copy import deepcopy
 from numpy import double, log
 from optparse import OptionParser
 
@@ -151,6 +152,7 @@ class DSSATXFileOutput:
                 soil_id_composite = 'SL' + str(len(soil_profiles)).zfill(8)
                 soil_idx = soil_ids.index(soil_id)
 
+                # soil_data comes from the soil.json file.
                 soil_layers = soil_data[soil_idx]['soilLayer']
                 soil_layers_arr = [0] * len(soil_layers)
 
@@ -257,6 +259,7 @@ class DSSATXFileOutput:
             root_arr = self.__get_obj(self.exps[i], 'dssat_root', [])
             me_org_arr = self.__get_list(self.exps[i], 'dssat_environment_modification', 'data')
             sm_org_arr = self.__get_list(self.exps[i], 'dssat_simulation_control', 'data')
+            # soil_arr pertenece al experiment.json
             soil_arr = self.__read_sw_data(self.exps[i], 'soil')
 
             for j in range(len(sq_arr)):
@@ -270,7 +273,7 @@ class DSSATXFileOutput:
                 mi_sub_arr = []; mf_sub_arr = []; mr_sub_arr = []
                 mc_sub_arr = []; mt_sub_arr = []; me_sub_arr = []
                 mh_sub_arr = []
-                
+
                 if j < len(soil_arr):
                     soil_data = soil_arr[j]
                 elif soil_arr == []:
@@ -337,7 +340,7 @@ class DSSATXFileOutput:
                         me_sub_arr.append(tmp)
                         
                 # set soil analysis info
-                soil_layers = self.__get_obj(soil_data, 'soilLayer', [])
+                soil_layers = self.__get_obj(soil_data, 'soilAnalysis', [])
                 has_soil_analysis = False
                 for k in range(len(soil_layers)):
                     if self.__get_obj(soil_layers[k], 'slsc', '') != '':
@@ -346,13 +349,16 @@ class DSSATXFileOutput:
                 if has_soil_analysis:
                     sa_data = {}
                     sa_sub_arr = []
-                    for k in range(len(soil_layers)):
-                        sa_sub_data = {}
-                        self.__copy_item(sa_sub_data, soil_layers[k], 'sabl', 'sllb')
-                        self.__copy_item(sa_sub_data, soil_layers[k], 'sasc', 'slsc')
+                    for soil_layer in soil_layers:
+                        # Support for other soil analysis variables.
+                        sa_sub_data = deepcopy(soil_layer)
+                        # self.__copy_item(sa_sub_data, soil_layers[k], 'sabl', 'sllb')
+                        # self.__copy_item(sa_sub_data, soil_layers[k], 'sasc', 'slsc')
+                        sa_sub_data['sabl'] = sa_sub_data['sllb']
+                        sa_sub_data['sasc'] = sa_sub_data['slsc']
                         sa_sub_arr.append(sa_sub_data)
                     self.__copy_item(sa_data, soil_data, 'sadat')
-                    sa_data['soilLayer'] = sa_sub_arr
+                    sa_data['soilAnalysis'] = sa_sub_arr
                     sa_num = self.__set_sec_data(sa_data, sa_arr)
                 else:
                     sa_num = 0
@@ -528,8 +534,8 @@ class DSSATXFileOutput:
                          for_field(sec_data, 'samhb', dC, 1, 'c', 5) + \
                          for_field(sec_data, 'sampx', dC, 1, 'c', 5) + \
                          for_field(sec_data, 'samke', dC, 1, 'c', 5) + \
-                         ' ' + self.__get_obj(sec_data, 'sa_name', dC)
-                sub_data_arr = self.__get_obj(sec_data, 'soilLayer', [])
+                         ' ' + self.__get_obj(sec_data, 'sa_name', dC) + '\n'
+                sub_data_arr = self.__get_obj(sec_data, 'soilAnalysis', [])
                 if sub_data_arr != []:
                     x_str += '@A  SABL  SADM  SAOC  SANI SAPHW SAPHB  SAPX  SAKE  SASC\n'
                 for j in range(len(sub_data_arr)):
@@ -543,7 +549,8 @@ class DSSATXFileOutput:
                              for_field(sub_data, 'saphb', dR, 1, 'r', 5, ndec = 1) + \
                              for_field(sub_data, 'sapx', dR, 1, 'r', 5, ndec = 1) + \
                              for_field(sub_data, 'sake', dR, 1, 'r', 5, ndec = 1) + \
-                             for_field(sub_data, 'sasc', dR, 1, 'r', 5) + '\n'
+                             for_field(sub_data, 'sasc', dR, 1, 'r', 5, ndec = 1) + '\n'
+            x_str += '\n'
         
         # INITIAL CONDITIONS section
         if ic_arr != []:
@@ -567,23 +574,67 @@ class DSSATXFileOutput:
                          for_field(sec_data, 'icrdp', dR, 1, 'r', 5) + \
                          ' ' + self.__get_obj(sec_data, 'ic_name', dR) + '\n'
                 sub_data_arr = self.__get_obj(self.soil_ic, self.__get_obj(sec_data, 'soil_id_composite', dC), [])
+
+                # These are the soil layers defined in the initial_conditions.soilLayer part
+                # of the experiment template.
+                json_exp_layers = self.__get_obj(sec_data, 'soilLayer', [])
+
+                # Here we'll store the soil horizons for which the experiment.json has data defined.
+                exp_icbl_list = map((lambda l: l.get("icbl")), json_exp_layers)
+
+                # Sort the json layers by the ICBL field.
+                #json_exp_layers = sorted(json_exp_layers, key=get_icbl)
+
                 if not 'icnh4' in sec_data:
-                    layers = self.__get_obj(sec_data, 'soilLayer', [])
-                    icnh4 = self.__get_obj(layers[0], 'icnh4', dR) if layers != [] else dR
+                    default_icnh4 = self.__get_obj(json_exp_layers[0], 'icnh4', dR) if json_exp_layers != [] else dR
                 else:
-                    icnh4 = sec_data['icnh4']
+                    default_icnh4 = sec_data['icnh4']
                 frac_full = self.__get_obj(sec_data, 'frac_full', '0.5')
                 if sub_data_arr != []:
                     x_str += '@C  ICBL  SH2O  SNH4  SNO3\n'                
                 for j in range(len(sub_data_arr)):
                     sub_data = sub_data_arr[j]
+
+                    icbl = sub_data['icbl']
+                    # This is the default values for each variable, as calculated before
+                    # adding support for soil initial conditions.
                     ich2o = double(frac_full) * double(self.__get_obj(sub_data, 'ich2o', dR))
+                    icno3 = sub_data.get('icno3', dR)
+                    icnh4 = default_icnh4
+
+                    # We check if there's data for this soil layer in the experiment.
+                    if icbl in exp_icbl_list:
+                        # We retrieve that layer.
+                        layer_ic = json_exp_layers[exp_icbl_list.index(icbl)]
+
+                        layer_ic_keys = layer_ic.keys()
+
+                        # If there's an absolute value defined for the ich20 variable defined in the
+                        # experiment template, then we use that value.
+                        if 'ich20' in layer_ic_keys:
+                            ich2o = double(layer_ic['ich20'])
+                        elif 'ich20_%' in layer_ic_keys:
+                            # If there's no absolute value but there's a percentage of water defined
+                            # for this layer, we compute that value.
+                            ich2o = double(layer_ic['ich20_%']) * double(self.__get_obj(sub_data, 'ich2o', dR))
+                        # Otherwise we use what was used originally: a global percentage defined
+                        # for every layer in the soil initial conditions.
+
+                        # If there are values for icnh4 and icno3, we use them. Otherwise, we leave it
+                        # as it was before adding soil support.
+                        if 'icnh4' in layer_ic_keys:
+                            icnh4 = double(layer_ic['icnh4'])
+
+                        if 'icno3' in layer_ic_keys:
+                            icno3 = double(layer_ic['icno3'])
+
                     ich2o = min(ich2o, 0.75) # maximum value of 1.75
+
                     x_str += for_str(str(i + 1), 0, 'r', 2) + \
-                             for_field(sub_data, 'icbl', dR, 1, 'r', 5) + \
-                             for_str(ich2o, 1, 'r', 5, ndec = 3) + \
-                             for_str(icnh4, 1, 'c', 5) + \
-                             for_field(sub_data, 'icno3', dR, 1, 'r', 5, ndec = 1) + '\n'
+                             for_str(icbl, 1, 'r', 5) + \
+                             for_str(ich2o, 1, 'r', 5, ndec=3) + \
+                             for_str(icnh4, 1, 'r', 5, ndec=1) + \
+                             for_str(icno3, 1, 'r', 5, ndec=1) + '\n'
             x_str += '\n'
 
         # PLANTING DETAILS section
@@ -760,7 +811,7 @@ class DSSATXFileOutput:
                              for_field(sec_data, 'eco2', dC, 1, 'c', 5) + \
                              for_field(sec_data, 'edew', dC, 1, 'c', 5) + \
                              for_field(sec_data, 'ewind', dC, 1, 'c', 5) + \
-                             ' ' + self.__get_obj(sec_data, 'envnam', dC) + '\n'                             
+                             ' ' + self.__get_obj(sec_data, 'envnam', dC) + '\n'
             x_str += '\n'
             
         # HARVEST DETAILS section
