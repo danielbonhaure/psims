@@ -102,6 +102,9 @@ campaign = nc(options.campaignfile, 'r', format = 'NETCDF4')
 # open experiment json file
 template = json.load(open(options.expfile, 'r'))
 
+lat_idx = int(options.latidx)
+lon_idx = int(options.lonidx)
+
 # determine gridpoint with nearest latitude and longitude
 delta = options.delta.split(',')
 if len(delta) < 1 or len(delta) > 2: raise Exception('Wrong number of delta values')
@@ -109,12 +112,13 @@ latdelta = double(delta[0]) / 60. # convert from arcminutes to degrees
 londelta = latdelta if len(delta) == 1 else double(delta[1]) / 60.
 lat = campaign.variables['lat'][:]
 lon = campaign.variables['lon'][:]
-latd = resize(lat, (len(lon), len(lat))).T - 90. + latdelta * (int(options.latidx) - 0.5)
-lond = resize(lon, (len(lat), len(lon))) + 180. - londelta * (int(options.lonidx) - 0.5)
+latd = resize(lat, (len(lon), len(lat))).T - 90. + latdelta * lat_idx
+lond = resize(lon, (len(lat), len(lon))) + 180. - londelta * lon_idx
 totd = latd ** 2 + lond ** 2
+
 idx = where(totd == totd.min())
-latidx = idx[0][0]
-lonidx = idx[1][0]
+latidx = idx[0][0] if lat_idx not in idx[0] else lat_idx
+lonidx = idx[1][0] if lon_idx not in idx[1] else lon_idx
 
 # latitude and longitude
 lat = lat[latidx]
@@ -206,14 +210,14 @@ for var in variables:
         dim.remove('lon')
 
         if is_soil_data:
-            dim.remove('soil_layer')
-
-            if v.ndim == 3:
+            if v.dimensions == ('soil_layer', 'lat', 'lon'):
                 var_array = v[:, latidx, lonidx]
                 # Repeat the array of values for each scenario and put it inside an array.
                 var_array = [var_array for i in range(num_scenarios)]
-            elif v.ndim == 4:
+            elif v.dimensions == ('scen', 'soil_layer', 'lat', 'lon'):
                 var_array = v[:, :, latidx, lonidx]
+            else:
+                raise Exception('Unrecognized dimensions %s for soil variable %s.' % (v.dimensions, var))
 
         else:
             if v.ndim == 2:
@@ -232,6 +236,10 @@ for var in variables:
                 var_array = repvals2(v[:, :, latidx, lonidx], dimsizes, orders, orders[dim_idx1], orders[dim_idx2])
             else:
                 raise Exception('Data contain variables with improper dimensions')
+
+    if len(var_array) < num_scenarios:
+        raise Exception('There are less variable values (%s) than scenarios (%s) for variable "%s".'
+                        % (len(var_array), num_scenarios, var))
 
     # limit to nscens
     var_array = var_array[: num_scenarios]
@@ -277,7 +285,17 @@ for var in variables:
             if var.startswith('ic'):
                 soil_layers = exp['experiments'][j]["initial_conditions"]["soilLayer"]
             else:
-                soil_layers = exp['experiments'][j]["soil"]["soilAnalysis"]
+                ## Extra code for backwards compatibility ##
+                # We look for "soilLayer".
+                soil_layers = exp['experiments'][j]["soil"].get("soilLayer")
+                # If not found, we look for 'soilAnalysis'
+                if not soil_layers:
+                    soil_layers = exp['experiments'][j]["soil"].get("soilAnalysis", [])
+                else:
+                    # If it is defined, we copy it's content to "soilAnalysis" and delete "soilLayer".
+                    exp['experiments'][j]["soil"]["soilAnalysis"] = copy.deepcopy(soil_layers)
+                    del exp['experiments'][j]["soil"]["soilLayer"]
+                    soil_layers = exp['experiments'][j]["soil"]["soilAnalysis"]
 
             size_diff = len(soil_layers) - len(val)
 

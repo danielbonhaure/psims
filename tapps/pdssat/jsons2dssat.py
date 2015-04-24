@@ -613,10 +613,10 @@ class DSSATXFileOutput:
                         # experiment template, then we use that value.
                         if 'ich20' in layer_ic_keys:
                             ich2o = double(layer_ic['ich20'])
-                        elif 'ich20_%' in layer_ic_keys:
+                        elif 'ich20_frac' in layer_ic_keys:
                             # If there's no absolute value but there's a percentage of water defined
                             # for this layer, we compute that value.
-                            ich2o = double(layer_ic['ich20_%']) * double(self.__get_obj(sub_data, 'ich2o', dR))
+                            ich2o = double(layer_ic['ich20_frac']) * double(self.__get_obj(sub_data, 'ich2o', dR))
                         # Otherwise we use what was used originally: a global percentage defined
                         # for every layer in the soil initial conditions.
 

@@ -234,11 +234,16 @@ run_command "$postprocess --latidx $latidx --lonidx $lonidx --ref_year $ref_year
 # Tar and compress output
 mkdir -p output
 for file in $(ls $(echo $outtypes | sed s/,/' *'/g) 2> /dev/null); do
-   ln -s $PWD/$file output/
+   #ln -s $PWD/$file output/
+   cp --dereference $PWD/$file output/
 done
-run_command tar czhf output.tar.gz output
+chmod 555 -R output
+echo "$PWD/$file output/"
 mkdir -p $(dirname $tar_out)
-run_command dd if=output.tar.gz of=$tar_out bs=1G
+#run_command tar.EXT tar -vczhf  "$tar_out" output
+run_command tar -vczhf  "$tar_out" output
+#run_command dd if=output.tar.gz of=$tar_out bs=1G
+chmod 777 -R output
 
 # Throw error if debugging
 shopt -s nocasematch
