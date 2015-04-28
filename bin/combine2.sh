@@ -261,7 +261,7 @@ for ((i = 1; i <= $num_lats; i++)); do
 done
 
 # calculate lat0 offset of grid into global grid
-lat0_off=$(echo "60*(90-$lat_zero)/$latdelta" | bc)
+lat0_off=$(echo "60*(90-($lat_zero))/$latdelta" | bc)
 
 # calculate number of scenarios from first file
 first_file=$(ls $file_dir/* | sort -n | head -1)

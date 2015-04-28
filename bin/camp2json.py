@@ -112,13 +112,12 @@ latdelta = double(delta[0]) / 60. # convert from arcminutes to degrees
 londelta = latdelta if len(delta) == 1 else double(delta[1]) / 60.
 lat = campaign.variables['lat'][:]
 lon = campaign.variables['lon'][:]
-latd = resize(lat, (len(lon), len(lat))).T - 90. + latdelta * lat_idx
-lond = resize(lon, (len(lat), len(lon))) + 180. - londelta * lon_idx
+latd = resize(lat, (len(lon), len(lat))).T - 90. + latdelta * (int(options.latidx) - 0.5)
+lond = resize(lon, (len(lat), len(lon))) + 180. - londelta * (int(options.lonidx) - 0.5)
 totd = latd ** 2 + lond ** 2
-
 idx = where(totd == totd.min())
-latidx = idx[0][0] if lat_idx not in idx[0] else lat_idx
-lonidx = idx[1][0] if lon_idx not in idx[1] else lon_idx
+latidx = idx[0][0]
+lonidx = idx[1][0]
 
 # latitude and longitude
 lat = lat[latidx]
@@ -128,6 +127,14 @@ lon = lon[lonidx]
 for attr in campaign.ncattrs():
     dict_replace(template, attr.lower(), campaign.getncattr(attr))
 dict_replace(template, 'site_name', str(lat) + ', ' + str(lon))
+
+## Extra code for backwards compatibility ##
+# We look for "soilLayer" inside the template soils. That field is mapped with the soil analysis section in
+# a DSSAT experiment, so we rename it to 'soilAnalysis' internally.
+soil_analysis = template.get('soil').get('soilLayer') if template.get('soil') else None
+if soil_analysis:
+    template['soil']['soilAnalysis'] = copy.deepcopy(soil_analysis)
+    del template['soil']['soilLayer']
 
 # dimensions
 dimensions = campaign.dimensions.keys()
@@ -282,20 +289,12 @@ for var in variables:
             if val.size == 0:
                 continue
 
+            # If the variable defined in the NetCDF file starts with the 'ic' string, we replace content in the
+            # initial conditions sections, otherwise, we assume that it belongs to the soil analysis section.
             if var.startswith('ic'):
-                soil_layers = exp['experiments'][j]["initial_conditions"]["soilLayer"]
+                soil_layers = exp['experiments'][j]["initial_conditions"].get("soilLayer", [])
             else:
-                ## Extra code for backwards compatibility ##
-                # We look for "soilLayer".
-                soil_layers = exp['experiments'][j]["soil"].get("soilLayer")
-                # If not found, we look for 'soilAnalysis'
-                if not soil_layers:
-                    soil_layers = exp['experiments'][j]["soil"].get("soilAnalysis", [])
-                else:
-                    # If it is defined, we copy it's content to "soilAnalysis" and delete "soilLayer".
-                    exp['experiments'][j]["soil"]["soilAnalysis"] = copy.deepcopy(soil_layers)
-                    del exp['experiments'][j]["soil"]["soilLayer"]
-                    soil_layers = exp['experiments'][j]["soil"]["soilAnalysis"]
+                soil_layers = exp['experiments'][j]["soil"].get("soilAnalysis", [])
 
             size_diff = len(soil_layers) - len(val)
 
