@@ -259,7 +259,7 @@ class DSSATXFileOutput:
             root_arr = self.__get_obj(self.exps[i], 'dssat_root', [])
             me_org_arr = self.__get_list(self.exps[i], 'dssat_environment_modification', 'data')
             sm_org_arr = self.__get_list(self.exps[i], 'dssat_simulation_control', 'data')
-            # soil_arr pertenece al experiment.json
+            # soil_arr belongs to experiment.json
             soil_arr = self.__read_sw_data(self.exps[i], 'soil')
 
             for j in range(len(sq_arr)):
@@ -352,10 +352,8 @@ class DSSATXFileOutput:
                     for soil_layer in soil_layers:
                         # Support for other soil analysis variables.
                         sa_sub_data = deepcopy(soil_layer)
-                        # self.__copy_item(sa_sub_data, soil_layers[k], 'sabl', 'sllb')
-                        # self.__copy_item(sa_sub_data, soil_layers[k], 'sasc', 'slsc')
-                        sa_sub_data['sabl'] = sa_sub_data['sllb']
-                        sa_sub_data['sasc'] = sa_sub_data['slsc']
+                        sa_sub_data['sabl'] = sa_sub_data.get('sllb')
+                        sa_sub_data['sasc'] = sa_sub_data.get('slsc')
                         sa_sub_arr.append(sa_sub_data)
                     self.__copy_item(sa_data, soil_data, 'sadat')
                     sa_data['soilAnalysis'] = sa_sub_arr
@@ -582,21 +580,20 @@ class DSSATXFileOutput:
                 # Here we'll store the soil horizons for which the experiment.json has data defined.
                 exp_icbl_list = map((lambda l: l.get("icbl")), json_exp_layers)
 
-                # Sort the json layers by the ICBL field.
-                #json_exp_layers = sorted(json_exp_layers, key=get_icbl)
-
                 if not 'icnh4' in sec_data:
                     default_icnh4 = self.__get_obj(json_exp_layers[0], 'icnh4', dR) if json_exp_layers != [] else dR
                 else:
                     default_icnh4 = sec_data['icnh4']
+
                 frac_full = self.__get_obj(sec_data, 'frac_full', '0.5')
+
                 if sub_data_arr != []:
                     x_str += '@C  ICBL  SH2O  SNH4  SNO3\n'                
                 for j in range(len(sub_data_arr)):
                     sub_data = sub_data_arr[j]
 
                     icbl = sub_data['icbl']
-                    # This is the default values for each variable, as calculated before
+                    # These are the default values for each variable, as calculated by pSIMS before
                     # adding support for soil initial conditions.
                     ich2o = double(frac_full) * double(self.__get_obj(sub_data, 'ich2o', dR))
                     icno3 = sub_data.get('icno3', dR)

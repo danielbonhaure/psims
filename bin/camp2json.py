@@ -102,9 +102,6 @@ campaign = nc(options.campaignfile, 'r', format = 'NETCDF4')
 # open experiment json file
 template = json.load(open(options.expfile, 'r'))
 
-lat_idx = int(options.latidx)
-lon_idx = int(options.lonidx)
-
 # determine gridpoint with nearest latitude and longitude
 delta = options.delta.split(',')
 if len(delta) < 1 or len(delta) > 2: raise Exception('Wrong number of delta values')
