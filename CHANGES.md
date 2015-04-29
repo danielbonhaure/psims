@@ -1,21 +1,22 @@
 # Changes made to pSIMS
-by @schmidtfederico
 
 ## camp2json.py
 
 ### Soil Analysis
 
-Changed the name of the soil analysis section of the template from `soil.soilLayer` to `soil.soilAnalysis` to make it more explicit and differentiate it from `initial_conditions.soilLayer`.
+Changed the name of the soil analysis section of the template from `soil.soilLayer` to `soil.soilAnalysis` to make it more explicit and differentiate it from `initial_conditions.soilLayer`.  
 However, this change is backwards compatible: if camp2json finds `soil.soilLayer` it will internally rename it to `soil.soilAnalysis`.
+
 **Note**: I haven't checked backwards compatibility with other models than DSSAT, but from a quick code inspection I assume that `soil.soilLayer` is never used neither by APSIM nor by CenW.
 
 ### Soil Initial Conditions
 
 Added support for a new dimension (**soil_layer**) in the NetCDF campaign file.
-Variables associated with this dimension will be replaced or created inside the soil initial condition section (`initial_conditions.soilLayer`) or the soil analysis section (`soil.soilAnalysis`) of the JSON experiment template.
-Variables with names starting with 'ic' will be replaced or created inside the initial conditions section, otherwise they'll be replaced inside the soil analysis section.
 
-The main difference between soil_layer variables and other pSIMS variables is that these kind of variables can create objects inside the experiment template.
+Variables associated with this dimension will be replaced or created inside the soil initial condition section (`initial_conditions.soilLayer`) or the soil analysis section (`soil.soilAnalysis`) of the JSON experiment template.  
+The ones with names starting with 'ic' will be replaced or created inside the initial conditions section, otherwise they'll be replaced inside the soil analysis section.
+
+The main difference between soil_layer variables and other pSIMS variables is that these kind of variables can create objects inside the experiment template.  
 For example, let's assume we want to control the soil initial conditions of a simulation we're running at 250/239:
 
 We'd create variables called `icbl`, `ich20`, `icno3`, and `icnh4` in the NetCDF file and associate them with dimensions `soil_layer`, `lat` and `lon`.
@@ -51,7 +52,7 @@ ncdf_file.close()
 
 ```
 
-Conveniently, the experiment template doesn't need to have anything special in the initial condition section for that to work.
+Conveniently, the experiment template doesn't need to have anything special in the initial condition section for that to work.  
 We can define an empty array and camp2json.py will expand it to fit the content of the variables:
 
 ```javascript
@@ -72,11 +73,11 @@ We can define an empty array and camp2json.py will expand it to fit the content 
 
 ### Soil Initial Conditions
 
-Soil initial conditions can now be overwritten with values in the `experiment.json` file.
-To maintain backwards compatibility, the values of ich20, icnh4 and icno3 are initially calculated as the old version of pSIMS did.
-Afterwards, the soil initial condition section (`exp[n].initial_conditions.soilLayer`) of the `experiment.json` file is analyzed and, if any of the aforementioned variables is defined in that file, then a replace is performed layer by layer.
+Soil initial conditions can now be overwritten with values in the `experiment.json` file.  
+To maintain backwards compatibility, the values of ich20, icnh4 and icno3 are initially calculated as the old version of pSIMS did.  
+Afterwards, the soil initial condition section (`exp[n].initial_conditions.soilLayer`) of the `experiment.json` file is analyzed and, if any of the aforementioned variables is defined in that file, then a replace is performed layer by layer.  
 
-Furthermore, a variable called `ich20_frac` was added. This variable behaves as `frac_full` but allows a layer-by-layer definition of the H2O fraction.
+Furthermore, a variable called `ich20_frac` was added. This variable behaves as `frac_full` but allows a layer-by-layer definition of the H2O fraction.  
 However, this variable has less precedence than `ich20`, meaning that if the latter is defined `ich20_frac` will be ignored for that layer.
 
 These changes can be found between lines 580 and 628.
@@ -107,5 +108,5 @@ lat0_off=$(echo "60*(90-($lat_zero))/$latdelta" | bc)
 
 ## RunpSIMS.sh
 
-Changes were made in the generation of the output.tar.gz file (between lines 236 and 242) to avoid "file changed as we read it" errors.
+Changes were made in the generation of the output.tar.gz file (between lines 236 and 242) to avoid "file changed as we read it" errors.  
 Instead of asking tar to dereference symbolic links, we copy the target files to a folder and set permissions to read only. That way, once tar starts running no changes can be made to those files.
