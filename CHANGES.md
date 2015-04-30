@@ -5,21 +5,22 @@
 ### Soil Analysis
 
 Changed the name of the soil analysis section of the template from `soil.soilLayer` to `soil.soilAnalysis` to make it more explicit and differentiate it from `initial_conditions.soilLayer`.  
-However, this change is backwards compatible: if camp2json finds `soil.soilLayer` it will internally rename it to `soil.soilAnalysis`.
+However, this change is backwards compatible: if camp2json finds `soil.soilLayer` it will internally rename it to `soil.soilAnalysis`.  
+The rename is performed between lines 128 and 134.
 
-**Note**: I haven't checked backwards compatibility with other models than DSSAT, but from a quick code inspection I assume that `soil.soilLayer` is never used neither by APSIM nor by CenW.
+**Note**: I haven't checked backwards compatibility with models other than DSSAT, but from a quick code inspection I assume that `soil.soilLayer` is never used neither by APSIM nor by CenW.
 
 ### Soil Initial Conditions
 
 Added support for a new dimension (**soil_layer**) in the NetCDF campaign file.
 
 Variables associated with this dimension will be replaced or created inside the soil initial condition section (`initial_conditions.soilLayer`) or the soil analysis section (`soil.soilAnalysis`) of the JSON experiment template.  
-The ones with names starting with 'ic' will be replaced or created inside the initial conditions section, otherwise they'll be replaced inside the soil analysis section.
+Variables with names starting with 'ic' will be replaced or created inside the initial conditions section, otherwise they will be replaced inside the soil analysis section.
 
-The main difference between soil_layer variables and other pSIMS variables is that these kind of variables can create objects inside the experiment template.  
+The main difference between soil_layer variables and other pSIMS variables is that soil variables can create objects inside the experiment template.  
 For example, let's assume we want to control the soil initial conditions of a simulation we're running at 250/239:
 
-We'd create variables called `icbl`, `ich20`, `icno3`, and `icnh4` in the NetCDF file and associate them with dimensions `soil_layer`, `lat` and `lon`.
+We would create variables called `icbl`, `ich20`, `icno3`, and `icnh4` in the NetCDF file and associate them with dimensions `soil_layer`, `lat` and `lon`:
 ```python
 ...
 # We should create the lat, lon, soil_layer and (if needed) scen dimensions and their corresponding dimensional variables beforehand.
@@ -52,8 +53,8 @@ ncdf_file.close()
 
 ```
 
-Conveniently, the experiment template doesn't need to have anything special in the initial condition section for that to work.  
-We can define an empty array and camp2json.py will expand it to fit the content of the variables:
+Conveniently, the experiment template doesn't need to have anything special in the initial condition section for that NetCDF to be written to the experiment.  
+We can define an empty array and camp2json.py will expand it to fill in the content of the variables:
 
 ```javascript
 ...
@@ -69,18 +70,20 @@ We can define an empty array and camp2json.py will expand it to fit the content 
 >**Note °2:** it's not necessary to define values for every soil layer, `initial_conditions.soilLayer` is used to replace values calculated by pSIMS based on the soil.json file.
 >See the next section (jsons2dssat.py > Soil Initial Conditions) for more details.
 
+Finally, changes made to support this feature can be found in the following sections of the code: lines 141-157, 193-242 and 255-304.
+
 ## jsons2dssat.py
 
 ### Soil Initial Conditions
 
 Soil initial conditions can now be overwritten with values in the `experiment.json` file.  
-To maintain backwards compatibility, the values of ich20, icnh4 and icno3 are initially calculated as the old version of pSIMS did.  
+To maintain backwards compatibility, the values of ich20, icnh4 and icno3 are initially calculated as the latest version of RDCEP/psims does.  
 Afterwards, the soil initial condition section (`exp[n].initial_conditions.soilLayer`) of the `experiment.json` file is analyzed and, if any of the aforementioned variables is defined in that file, then a replace is performed layer by layer.  
 
 Furthermore, a variable called `ich20_frac` was added. This variable behaves as `frac_full` but allows a layer-by-layer definition of the H2O fraction.  
 However, this variable has less precedence than `ich20`, meaning that if the latter is defined `ich20_frac` will be ignored for that layer.
 
-These changes can be found between lines 580 and 628.
+These changes can be found between lines 580 and 626.
 
 ### Soil Analysis
 
@@ -88,7 +91,7 @@ These changes can be found between lines 580 and 628.
 It was caused by a few missing newline characters near lines 537-553.
  
 * Added support for every variable in the Soil Analysis section. Previously, pSIMS would only write values for `sabl` and `sasc`.
-This changes are found between lines 353 and 361.
+This changes are found between lines 352 and 360.
 
 ## combine2.sh
 

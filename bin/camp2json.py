@@ -241,10 +241,6 @@ for var in variables:
             else:
                 raise Exception('Data contain variables with improper dimensions')
 
-    if len(var_array) < num_scenarios:
-        raise Exception('There are less variable values (%s) than scenarios (%s) for variable "%s".'
-                        % (len(var_array), num_scenarios, var))
-
     # limit to nscens
     var_array = var_array[: num_scenarios]
 
