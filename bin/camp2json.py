@@ -218,6 +218,8 @@ for var in variables:
                 var_array = v[:, latidx, lonidx]
                 # Repeat the array of values for each scenario and put it inside an array.
                 var_array = [var_array for i in range(num_scenarios)]
+            elif v.dimensions == ('lat', 'lon', 'soil_layer'):
+                var_array = [v[latidx, lonidx, :] for i in range(num_scenarios)]
             elif v.dimensions == ('scen', 'soil_layer', 'lat', 'lon'):
                 var_array = v[:, :, latidx, lonidx]
             else:

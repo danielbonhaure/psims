@@ -113,7 +113,7 @@ parser.add_option("-v", "--variables", dest = "variables", default = "", type = 
                   help = "String of comma-separated list (with no spaces) of variables to process")
 parser.add_option("-u", "--units", dest = "units", default = "", type = "string",
                   help = "Comma-separated list (with no spaces) of units for the variables")
-parser.add_option("-d", "--delta", dest = "delta", default = 30, type = "string",
+parser.add_option("-d", "--delta", dest = "delta", default = "30", type = "string",
                   help = "Distance(s) between each latitude/longitude grid cell in arcminutes")
 parser.add_option("-r", "--ref_year", dest = "ref_year", default = 1958, type = "int",
                   help = "Reference year from which to record times")                          
