@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import os
 
 import sys
 from os.path import isfile, sep
@@ -50,8 +51,9 @@ lons = [-180. + londelta1 * (lonidx - i) for i in lond]
 for i in range(len(lats)):
     latidx2, lonidx2 = translate(lats[i], lons[i], latdelta2, londelta2)
     latidx2, lonidx2 = '%03d' % latidx2, '%03d' % lonidx2
-    wfile = sep.join([weathdir2, latidx2, lonidx2, '%s_%s.psims.nc' % (latidx2, lonidx2)])
-    if isfile(wfile):
+    dir = sep.join([weathdir2, latidx2, lonidx2])
+    wfile = os.path.join(dir, '%s_%s.psims.nc' % (latidx2, lonidx2))
+    if isfile(wfile) or len(os.listdir(dir)) > 0:
         print latidx2 + sep + lonidx2
         sys.exit(0) # success
 

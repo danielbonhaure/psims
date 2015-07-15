@@ -170,13 +170,15 @@ class DSSATXFileOutput:
                         slsil = max(100. - slsnd - slcly, 0.)
                         slcly = str(slcly)
                         slsil = str(slsil)
-                        sldul = ptransfer(slcly, slsil, sloc, slcf)[1]
+                        slll, sldul = ptransfer(slcly, slsil, sloc, slcf)[0:2]
                     else:
                         # use value in file
                         sldul = soil_layers[j]['sldul'] if 'sldul' in soil_layers[j] else self.def_val_R
+                        slll = soil_layers[j]['slll'] if 'slll' in soil_layers[j] else self.def_val_R
                     soil_layer_dic['icbl']  = soil_layers[j]['sllb'] if 'sllb' in soil_layers[j] else self.def_val_R
                     soil_layer_dic['icno3'] = soil_layers[j]['sloc'] if 'sloc' in soil_layers[j] else self.def_val_R
                     soil_layer_dic['ich2o'] = str(sldul)
+                    soil_layer_dic['slll'] = str(slll)
                     soil_layers_arr[j] = soil_layer_dic
 
                 self.soil_ic[soil_id_composite] = soil_layers_arr
@@ -613,7 +615,9 @@ class DSSATXFileOutput:
                         elif 'ich20_frac' in layer_ic_keys:
                             # If there's no absolute value but there's a percentage of water defined
                             # for this layer, we compute that value.
-                            ich2o = double(layer_ic['ich20_frac']) * double(self.__get_obj(sub_data, 'ich2o', dR))
+                            slll = double(self.__get_obj(sub_data, 'slll', dR))
+                            sldul = double(self.__get_obj(sub_data, 'ich2o', dR))
+                            ich2o = double(layer_ic['ich20_frac']) * (sldul - slll) + slll
                         # Otherwise we use what was used originally: a global percentage defined
                         # for every layer in the soil initial conditions.
 

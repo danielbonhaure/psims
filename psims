@@ -213,9 +213,11 @@ generate_rerun rerun.combine3.sh combine3.swift $site $arguments
 
 # Run Swift scripts
 ./rerun.parts.sh
-./rerun.combine1.sh
-./rerun.combine2.sh
-./rerun.combine3.sh
+if [[ "$postprocess" != OUT2Mongo* ]]; then  # If $postprocess starts with OUT2Mongo, skip combining.
+   ./rerun.combine1.sh
+   ./rerun.combine2.sh
+   ./rerun.combine3.sh
+fi
 
 # Plots
 if [[ "$plots" == "true" ]]; then

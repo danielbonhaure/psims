@@ -187,10 +187,14 @@ for ((i = 0; i < ${#weather[@]}; i++)); do
    if [ $? != 0 ]; then
       crash "Failed to translate grid indices for directory $wdir with resolution $latd, $lond"
    fi
-   if [ `ls $wdir/$grid | wc -l` -gt 1 ]; then
-      crash "Weather directory $wdir/$grid contains more than one pSIMS file"
+   if [ "$tappwth" == "cp" ]; then
+       cp --dereference $wdir/$grid/* .
+   else
+       if [ `ls $wdir/$grid | wc -l` -gt 1 ]; then
+          crash "Weather directory $wdir/$grid contains more than one pSIMS file"
+       fi
+       ln -s $wdir/$grid/$(ls $wdir/$grid) $(($i+1)).psims.nc
    fi
-   ln -s $wdir/$grid/$(ls $wdir/$grid) $(($i+1)).psims.nc
 done
 
 # Copy reference data
@@ -216,7 +220,9 @@ else
 fi
 
 # Generate input weather file from psims file
-run_command "$tappwth -i 1.psims.nc"
+if [ "$tappwth" != "cp" ]; then
+    run_command "$tappwth -i 1.psims.nc"
+fi
 
 # Create parts directory
 mkdir -p $(dirname $part_out)
