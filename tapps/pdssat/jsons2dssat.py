@@ -580,7 +580,7 @@ class DSSATXFileOutput:
                 json_exp_layers = self.__get_obj(sec_data, 'soilLayer', [])
 
                 # Here we'll store the soil horizons for which the experiment.json has data defined.
-                exp_icbl_list = map((lambda l: l.get("icbl")), json_exp_layers)
+                exp_icbl_list = map((lambda l: int(l.get("icbl"))), json_exp_layers)
 
                 if not 'icnh4' in sec_data:
                     default_icnh4 = self.__get_obj(json_exp_layers[0], 'icnh4', dR) if json_exp_layers != [] else dR
@@ -594,7 +594,7 @@ class DSSATXFileOutput:
                 for j in range(len(sub_data_arr)):
                     sub_data = sub_data_arr[j]
 
-                    icbl = sub_data['icbl']
+                    icbl = int(sub_data['icbl'])
                     # These are the default values for each variable, as calculated by pSIMS before
                     # adding support for soil initial conditions.
                     ich2o = double(frac_full) * double(self.__get_obj(sub_data, 'ich2o', dR))
@@ -617,7 +617,7 @@ class DSSATXFileOutput:
                             # for this layer, we compute that value.
                             slll = double(self.__get_obj(sub_data, 'slll', dR))
                             sldul = double(self.__get_obj(sub_data, 'ich2o', dR))
-                            ich2o = double(layer_ic['ich20_frac']) * (sldul - slll) + slll
+                            ich2o = double(layer_ic['ich20_frac']) * (float(sldul) - float(slll)) + float(slll)
                         # Otherwise we use what was used originally: a global percentage defined
                         # for every layer in the soil initial conditions.
 
@@ -1324,4 +1324,6 @@ if cstr != '': open(options.CULfile, 'w').write(cstr)
 
 # parse soil JSON file and write out SOL file
 sfileoutput = SOLFileOutput(options.sfile, options.efile, use_ptransfer = options.pfcn)
-open(options.SOLfile, 'w').write(sfileoutput.toSOLFile())
+
+with open(options.SOLfile, 'w') as f:
+    f.write(sfileoutput.toSOLFile().encode('ascii', 'ignore'))

@@ -89,7 +89,11 @@ if first_line_len > 1:
 if first_line_len > 2:
     data_dic['sltx'] = lines[0][2]
 if first_line_len > 3:
-    data_dic['sldp'] = lines[0][3]
+    try:
+        sldp = float(lines[0][3])
+        data_dic['sldp'] = str(sldp)
+    except ValueError:
+        data_dic['sldp'] = '-99'
 # read 3rd line
 data_dic['soil_name'] = ' '.join(lines[0][4 :])
 data_dic['sl_loc_3'] = lines[2][0]
@@ -117,4 +121,4 @@ for i in range(num_layers):
 all_data = {'soils': [data_dic]}
 
 # save json file
-json.dump(all_data, open(options.outputfile, 'w'), ensure_ascii=False, indent = 4, separators=(',', ': '))
+json.dump(all_data, open(options.outputfile, 'w'), ensure_ascii=True, indent = 4, separators=(',', ': '), encoding='latin-1')
