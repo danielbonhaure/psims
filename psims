@@ -68,6 +68,16 @@ while [ $# -gt 0 ]; do
   esac
 done
 
+#campaign_arg="$( echo "$campaign_arg" | sed 's/ /\\ /g' )"
+#gridlist="$( echo "$gridlist" | sed 's/ /\\ /g' )"
+#paramfile="$( echo "$paramfile" | sed 's/ /\\ /g' )"
+#
+#echo ""
+#echo "campaign_arg=$campaign_arg"
+#echo "gridlist=$gridlist"
+#echo "paramfile=$paramfile"
+#echo ""
+
 # Required arguments
 verify_not_null campaign $campaign_arg
 verify_not_null gridlist $gridlist

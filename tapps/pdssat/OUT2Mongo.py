@@ -217,9 +217,12 @@ with open(options.inputfile) as summary:
             double_variables_values = np.empty(shape=(num_scenarios, num_years, len(double_variables_indexes)))
             double_variables_values.fill(-99)
             str_variables_values = np.empty(shape=(num_scenarios, num_years, len(str_variables_indexes)),
-                                            dtype='|S50')  # Max str length = 50 chars
+                                            dtype='|S20')  # Max str length = 20 chars
             str_variables_values.fill('')
             continue
+
+        # Replace all invalid values with -99
+        #line = re.sub(invalid_variables_values, '-99', line)
 
         # Parse the experiment line to find all the variables values.
         exp_variables_values = variables_values_regex.findall(line)
@@ -232,10 +235,16 @@ with open(options.inputfile) as summary:
         year_index = experiment_index - scen_index * num_years
 
         # Finally, add float variables first and then string variables.
-        double_variables_values[scen_index][year_index][:] = [float(exp_variables_values[i])
-                                                              for i in double_variables_indexes]
-        str_variables_values[scen_index][year_index][:] = [exp_variables_values[i] for i in str_variables_indexes]
+        for i, var_idx in enumerate(double_variables_indexes):
+            try:
+                val = float(exp_variables_values[var_idx])
+                if val == 9999999.:
+                    val = -99.
+            except:
+                val = -99.
+            double_variables_values[scen_index][year_index][i] = val
 
+        str_variables_values[scen_index][year_index][:] = [exp_variables_values[var_idx] for var_idx in str_variables_indexes]
 
 # After parsing the summary file, we add the results to a python dictionary (the object that will be inserted in the
 # Mongo database).
@@ -303,20 +312,22 @@ for data_idx, var_summary_idx in enumerate(str_variables_indexes):
     var_name = summary_variables[var_summary_idx]
     add_to_mongo_object(mongo_object, str_variables_values, data_idx, var_name)
 
-if collection_id:
-    doc_query = {"_id": collection_id}
-    update_query = mongo_object
+print(mongo_object)
 
-    if collection_field:
-        update_query = {
-            "$set": {
-                collection_field: mongo_object
-            }
-        }
-
-    operation_result = db[mongo_collection].update_one(doc_query, update_query, upsert=True)
-else:
-    operation_result = db[mongo_collection].insert_one(mongo_object)
-
-if not operation_result.acknowledged:
-        raise Exception("Failed to insert results for latidx(%s) and lonidx(%s)." % (latidx, lonidx))
+# if collection_id:
+#     doc_query = {"_id": collection_id}
+#     update_query = mongo_object
+#
+#     if collection_field:
+#         update_query = {
+#             "$set": {
+#                 collection_field: mongo_object
+#             }
+#         }
+#
+#     operation_result = db[mongo_collection].update_one(doc_query, update_query, upsert=True)
+# else:
+#     operation_result = db[mongo_collection].insert_one(mongo_object)
+#
+# if not operation_result.acknowledged:
+#         raise Exception("Failed to insert results for latidx(%s) and lonidx(%s)." % (latidx, lonidx))
