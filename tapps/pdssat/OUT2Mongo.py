@@ -85,6 +85,8 @@ default_var_units = {'SDAT': 'YrDoy', 'PDAT': 'Doy',
 parser = OptionParser()
 parser.add_option("-i", "--input", dest="inputfile", default="data/Summary.OUT", type="string",
                   help="DSSAT OUT file to parse", metavar="FILE")
+# Output parameter are not used when results are inserted in MongoDB.
+# It's left here to maintain polymorphism among scripts.
 parser.add_option("-o", "--output", dest="output", default=None, type="string",
                   help="Unused", metavar="FILE")
 
@@ -112,6 +114,7 @@ parser.add_option("-v", "--variables", dest="variables", default="", type="strin
                   help="String of comma-separated list (with no spaces) of variables to process")
 parser.add_option("-u", "--units", dest="units", default="", type="string",
                   help="Comma-separated list (with no spaces) of units for the variables")
+# Delta parameter is not used when inserting in MongoDB, it's left here to maintain polymorphism among scripts.
 parser.add_option("-d", "--delta", dest="delta", default="30", type="string",
                   help="Distance(s) between each latitude/longitude grid cell in arcminutes")
 parser.add_option("-r", "--ref_year", dest="ref_year", default=1958, type="int",
@@ -188,9 +191,6 @@ variables_values_regex = re.compile('[^\s]+')
 # Make all variable upper case to avoid case typos.
 variables = [v.upper() for v in variables]
 
-# This factor helps us divide experiments in scenarios by using just the experiment index inside the file.
-scen_index_factor = num_years * num_scenarios
-
 # Open the summary file and parse it.
 with open(options.inputfile) as summary:
     skipped_indexes = 0
@@ -231,7 +231,7 @@ with open(options.inputfile) as summary:
             continue
 
         # Find the scenario and year where this experiment should be placed.
-        scen_index = experiment_index % scen_index_factor
+        scen_index = int(experiment_index / num_years)
         year_index = experiment_index - scen_index * num_years
 
         # Finally, add float variables first and then string variables.
@@ -312,22 +312,20 @@ for data_idx, var_summary_idx in enumerate(str_variables_indexes):
     var_name = summary_variables[var_summary_idx]
     add_to_mongo_object(mongo_object, str_variables_values, data_idx, var_name)
 
-print(mongo_object)
+if collection_id:
+    doc_query = {"_id": collection_id}
+    update_query = mongo_object
 
-# if collection_id:
-#     doc_query = {"_id": collection_id}
-#     update_query = mongo_object
-#
-#     if collection_field:
-#         update_query = {
-#             "$set": {
-#                 collection_field: mongo_object
-#             }
-#         }
-#
-#     operation_result = db[mongo_collection].update_one(doc_query, update_query, upsert=True)
-# else:
-#     operation_result = db[mongo_collection].insert_one(mongo_object)
-#
-# if not operation_result.acknowledged:
-#         raise Exception("Failed to insert results for latidx(%s) and lonidx(%s)." % (latidx, lonidx))
+    if collection_field:
+        update_query = {
+            "$set": {
+                collection_field: mongo_object
+            }
+        }
+
+    operation_result = db[mongo_collection].update_one(doc_query, update_query, upsert=True)
+else:
+    operation_result = db[mongo_collection].insert_one(mongo_object)
+
+if not operation_result.acknowledged:
+        raise Exception("Failed to insert results for latidx(%s) and lonidx(%s)." % (latidx, lonidx))

@@ -237,6 +237,13 @@ run_model "$model" "$executable" "$rundir"
 run_command "$postprocess --latidx $latidx --lonidx $lonidx --ref_year $ref_year --delta $sim_lat_delta,$sim_lon_delta \
                           -y $num_years -s $cscens -v $variables -u $var_units --output $part_out"
 
+if [ -n "$postprocess_daily" ] && [ -n "$daily_variables" ]; then
+   # We should do daily data postprocessing.
+   run_command "$postprocess_daily --latidx $latidx --lonidx $lonidx --ref_year $ref_year \
+                          --delta $sim_lat_delta,$sim_lon_delta \
+                          -y $num_years -s $cscens -v $daily_variables"
+fi
+
 # Tar and compress output
 mkdir -p output
 for file in $(ls $(echo $outtypes | sed s/,/' *'/g) 2> /dev/null); do
