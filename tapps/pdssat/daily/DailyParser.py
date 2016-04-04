@@ -4,76 +4,20 @@ __author__ = 'Federico Schmidt'
 # import modules
 import re
 from datetime import datetime
+from VariablesDictionary import default_var_names, default_var_units
 
-default_var_names = {
-    'YEAR': '',
-    'DOY': '',
-    'DAS': '',
-    'DAP': '',
-    'L#SD': '',
-    'GSTD': '',
-    'LAID': '',
-    'LWAD': '',
-    'SWAD': '',
-    'GWAD': '',
-    'RWAD': '',
-    'VWAD': '',
-    'CWAD': '',
-    'G#AD': '',
-    'GWGD': '',
-    'HIAD': '',
-    'PWAD': '',
-    'P#AD': '',
-    'WSPD': '',
-    'WSGD': '',
-    'NSTD': '',
-    'EWSD': '',
-    'PST1A': '',
-    'PST2A': '',
-    'KSTD': '',
-    'LN%D': '',
-    'SH%D': '',
-    'HIPD': '',
-    'PWDD': '',
-    'PWTD': '',
-    'SLAD': '',
-    'CHTD': '',
-    'CWID': '',
-    'RDPD': '',
-    'RL1D': '',
-    'RL2D': '',
-    'RL3D': '',
-    'RL4D': '',
-    'RL5D': '',
-    'RL6D': '',
-    'RL7D': '',
-    'RL8D': '',
-    'RL9D': '',
-    'CDAD': '',
-    'LDAD': '',
-    'SDAD': '',
-    'SNW0C': '',
-    'SNW1C': '',
-    'DTTD': ''
-}
-
-default_var_units = {
-
-}
-
-# Regex for parsing the summary file header and experiments.
+# Regex for parsing the table headers (variable names) and content (variables values).
 variables_names_regex = re.compile('[^(\s|\.)]+')
 variables_values_regex = re.compile('[^\s]+')
 
 
-def parse_plantgro(variables, mongo_object, units, scen_names, num_years, ref_date, ref_year, omitted_value,
-                   input_file='PlantGro.OUT'):
+def parse_file(input_file, variables, mongo_object, units, scen_names, num_years, ref_date, ref_year, omitted_value):
     experiment_index = -1
     experiment_day_index = -1
 
     for v in variables:
-        if v not in default_var_names:
-            continue
+        # if v not in default_var_names:
+        #     continue
 
         var_name = default_var_names[v] if len(default_var_names[v]) > 0 else v
         var_unit = units[v] if v in units else None
@@ -89,17 +33,21 @@ def parse_plantgro(variables, mongo_object, units, scen_names, num_years, ref_da
             'scenarios': []
         }
 
-    # Open the PlantGro file and parse it.
-    with open(input_file) as plant_gro:
-        for line_idx, line in enumerate(plant_gro):
+    # Open the input file and parse it.
+    with open(input_file) as daily_input_file:
+        for line in daily_input_file:
             line = line.strip()
 
             if len(line) == 0:
                 # Empty line.
                 continue
 
+            # When a line starts with the @ char it means it's a table header, therefore it also means that we have
+            # found the start of an experiment output.
             if line[0] == '@':
+                # Increment the experiment number.
                 experiment_index += 1
+                # Restart the daily index.
                 experiment_day_index = -1
                 # Remove the first char.
                 line = line[1:]
@@ -108,7 +56,7 @@ def parse_plantgro(variables, mongo_object, units, scen_names, num_years, ref_da
                 # Find the index of each variable we must parse.
                 variables_indexes = {header_variables.index(v) for v in variables}
 
-                # Find the scenario and year index, where this experiment should be placed.
+                # Find the scenario and year index where this experiment should be placed inside the output structure.
                 scen_index = int(experiment_index / num_years)
                 year_index = experiment_index - scen_index * num_years
 
@@ -178,7 +126,8 @@ def parse_plantgro(variables, mongo_object, units, scen_names, num_years, ref_da
                 else:
                     mongo_object[v]['scenarios'][scen_index]['start_date'] = vars_date
 
-            for i, var_idx in enumerate(variables_indexes):
+            for var_idx in variables_indexes:
+                var_name = header_variables[var_idx]
                 try:
                     val = float(exp_variables_values[var_idx])
                     if val == 9999999.:
@@ -193,8 +142,8 @@ def parse_plantgro(variables, mongo_object, units, scen_names, num_years, ref_da
                     continue
 
                 if num_years > 1:
-                    mongo_object[v]['scenarios'][scen_index]['years'][year_index]['days'].append(vars_date)
-                    mongo_object[v]['scenarios'][scen_index]['years'][year_index]['values'].append(val)
+                    mongo_object[var_name]['scenarios'][scen_index]['years'][year_index]['days'].append(vars_date)
+                    mongo_object[var_name]['scenarios'][scen_index]['years'][year_index]['values'].append(val)
                 else:
-                    mongo_object[v]['scenarios'][scen_index]['days'].append(vars_date)
-                    mongo_object[v]['scenarios'][scen_index]['values'].append(val)
+                    mongo_object[var_name]['scenarios'][scen_index]['days'].append(vars_date)
+                    mongo_object[var_name]['scenarios'][scen_index]['values'].append(val)

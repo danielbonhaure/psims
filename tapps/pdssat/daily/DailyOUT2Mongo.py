@@ -1,22 +1,31 @@
 #!/usr/bin/env python
-import logging
-import re
-
 __author__ = 'Federico Schmidt'
 
 
 # import modules
+import logging
+import os
 import json
 import numpy as np
 import pymongo
 from optparse import OptionParser
 from bson.objectid import ObjectId
 from datetime import datetime
-import sys
-from PlantGro2Mongo import parse_plantgro
+from DailyParser import parse_file
 
-parsers = {
-    parse_plantgro: {'YEAR', 'DOY', 'DAS', 'DAP', 'L#SD', 'GSTD', 'LAID', 'LWAD', 'SWAD', 'GWAD', 'RWAD', 'VWAD', 'CWAD', 'G#AD', 'GWGD', 'HIAD', 'PWAD', 'P#AD', 'WSPD', 'WSGD', 'NSTD', 'EWSD', 'PST1A', 'PST2A', 'KSTD', 'LN%D', 'SH%D', 'HIPD', 'PWDD', 'PWTD', 'SLAD', 'CHTD', 'CWID', 'RDPD', 'RL1D', 'RL2D', 'RL3D', 'RL4D', 'RL5D', 'RL6D', 'RL7D', 'RL8D', 'RL9D', 'CDAD', 'LDAD', 'SDAD', 'SNW0C', 'SNW1C', 'DTTD'}
+files_variables = {
+    'ET.OUT': {'YEAR', 'DOY', 'DAS', 'SRAA', 'TMAXA', 'TMINA', 'EOAA', 'EOPA', 'EOSA', 'ETAA', 'EPAA', 'ESAA', 'EFAA',
+               'EMAA', 'EOAC', 'ETAC', 'EPAC', 'ESAC', 'EFAC', 'EMAC'},
+    'PlantGro.OUT': {'YEAR', 'DOY', 'DAS', 'DAP', 'L#SD', 'GSTD', 'LAID', 'LWAD', 'SWAD', 'GWAD', 'RWAD', 'VWAD',
+                     'CWAD', 'G#AD', 'GWGD', 'HIAD', 'PWAD', 'P#AD', 'WSPD', 'WSGD', 'NSTD', 'EWSD', 'PST1A', 'PST2A',
+                     'KSTD', 'LN%D', 'SH%D', 'HIPD', 'PWDD', 'PWTD', 'SLAD', 'CHTD', 'CWID', 'RDPD', 'RL1D', 'RL2D',
+                     'RL3D', 'RL4D', 'RL5D', 'RL6D', 'RL7D', 'RL8D', 'RL9D', 'CDAD', 'LDAD', 'SDAD', 'SNW0C', 'SNW1C',
+                     'DTTD'},
+    'SoilWat.OUT': {'YEAR', 'DOY', 'DAS', 'SWTD', 'SWXD', 'ROFC', 'DRNC', 'PREC', 'IR', 'C', 'IRRC', 'DTWT', 'MWTD',
+                    'TDFD', 'TDFC', 'ROFD', 'SW1D', 'SW2D', 'SW3D', 'SW4D', 'SW5D', 'SW6D', 'SW7D', 'SW8D', 'SW9D'},
+    'Mulch.OUT': {'YEAR', 'DOY', 'DAS', 'MCFD', 'MDEPD', 'MWAD', 'MWTD'},
+    'Weather.OUT': {'YEAR', 'DOY', 'DAS', 'PRED', 'DAYLD', 'TWLD', 'SRAD', 'PARD', 'CLDD', 'TMXD', 'TMND', 'TAVD',
+                    'TDYD', 'TDWD', 'TGAD', 'TGRD', 'WDSD', 'CO2D'}
 }
 
 # parse inputs
@@ -161,12 +170,13 @@ if omitted_value is not None:
     mongo_object['metadata']['omitted_value'] = omitted_value
 
 # Parse variables inside the different files...
-for parser, extractable_variables in parsers.iteritems():
+for daily_file, extractable_variables in files_variables.iteritems():
     found_variables = extractable_variables & variables
 
-    if len(found_variables) > 0:
-        # We should call this parser to extract them.
-        parser(found_variables, mongo_object, units, scen_names, num_years, ref_date, ref_year, omitted_value)
+    if len(found_variables) > 0 and os.path.exists(daily_file):
+        # We should parse this file to extract them.
+        parse_file(daily_file, found_variables, mongo_object, units, scen_names, num_years,
+                   ref_date, ref_year, omitted_value)
         # Remove from the set of pending variables the ones we have just finished extracting.
         variables = variables - found_variables
 
