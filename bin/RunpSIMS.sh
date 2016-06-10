@@ -244,15 +244,17 @@ if [ -n "$postprocess_daily" ] && [ -n "$daily_variables" ]; then
                           -y $num_years -s $cscens -v $daily_variables"
 fi
 
-# Tar and compress output
-mkdir -p output
-for file in $(ls $(echo $outtypes | sed s/,/' *'/g) 2> /dev/null); do
-   cp --dereference $PWD/$file output/
-done
-chmod 555 -R output
-mkdir -p $(dirname $tar_out)
-run_command tar -vczhf  "$tar_out" output
-chmod 777 -R output
+if [ -n "$outtypes" ]; then
+   # Tar and compress output
+   mkdir -p output
+   for file in $(ls $(echo $outtypes | sed s/,/' *'/g) 2> /dev/null); do
+      cp --dereference $PWD/$file output/
+   done
+   chmod 555 -R output
+   mkdir -p $(dirname $tar_out)
+   run_command tar -vczhf  "$tar_out" output
+   chmod 777 -R output
+fi
 
 # Throw error if debugging
 shopt -s nocasematch
