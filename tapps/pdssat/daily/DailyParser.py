@@ -38,13 +38,9 @@ def parse_file(input_file, variables, mongo_object, units, scen_names, num_years
         for line in daily_input_file:
             line = line.strip()
 
-            if len(line) == 0:
-                # Empty line.
-                continue
-
             # When a line starts with the @ char it means it's a table header, therefore it also means that we have
             # found the start of an experiment output.
-            if line[0] == '@':
+            if len(line) > 0 and line[0] == '@':
                 # Increment the experiment number.
                 experiment_index += 1
                 # Restart the daily index.
@@ -102,9 +98,11 @@ def parse_file(input_file, variables, mongo_object, units, scen_names, num_years
                 # If we are saving only "relevant" values, we must add info about the end date of the time series.
                 if omitted_value is not None and experiment_day_index > 0:
                     if num_years > 1:
-                        mongo_object[v]['scenarios'][scen_index]['years'][year_index]['end_date'] = vars_date
+                        for v in variables:
+                            mongo_object[v]['scenarios'][scen_index]['years'][year_index]['end_date'] = vars_date
                     else:
-                        mongo_object[v]['scenarios'][scen_index]['end_date'] = vars_date
+                        for v in variables:
+                            mongo_object[v]['scenarios'][scen_index]['end_date'] = vars_date
 
                     experiment_day_index = -1
 
@@ -122,9 +120,11 @@ def parse_file(input_file, variables, mongo_object, units, scen_names, num_years
 
             if omitted_value is not None and experiment_day_index == 0:
                 if num_years > 1:
-                    mongo_object[v]['scenarios'][scen_index]['years'][year_index]['start_date'] = vars_date
+                    for v in variables:
+                        mongo_object[v]['scenarios'][scen_index]['years'][year_index]['start_date'] = vars_date
                 else:
-                    mongo_object[v]['scenarios'][scen_index]['start_date'] = vars_date
+                    for v in variables:
+                        mongo_object[v]['scenarios'][scen_index]['start_date'] = vars_date
 
             for var_idx in variables_indexes:
                 var_name = header_variables[var_idx]
