@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+from collections import OrderedDict
+
 __author__ = 'Federico Schmidt'
 
 
@@ -21,15 +23,17 @@ files_variables = {
                      'KSTD', 'LN%D', 'SH%D', 'HIPD', 'PWDD', 'PWTD', 'SLAD', 'CHTD', 'CWID', 'RDPD', 'RL1D', 'RL2D',
                      'RL3D', 'RL4D', 'RL5D', 'RL6D', 'RL7D', 'RL8D', 'RL9D', 'CDAD', 'LDAD', 'SDAD', 'SNW0C', 'SNW1C',
                      'DTTD'},
-    'PlantGrf.OUT': {'YEAR', 'DOY', 'DAS', 'DAP', 'TMEAN', 'GSTD', 'DU', 'VRNFD', 'DYLFD', 'TFPD', 'WFPD', 'NFPD',
-                     'CO2FD', 'RSFPD', 'TFGD', 'WFGD', 'NFGD', 'WFTD', 'NFTD', 'WAVRD', 'WUPRD', 'SWXD', 'EOPD',
-                     'SNXD', 'LN%RD', 'SN%RD', 'RN%RD'},
     'SoilWat.OUT': {'YEAR', 'DOY', 'DAS', 'SWTD', 'SWXD', 'ROFC', 'DRNC', 'PREC', 'IR', 'C', 'IRRC', 'DTWT', 'MWTD',
                     'TDFD', 'TDFC', 'ROFD', 'SW1D', 'SW2D', 'SW3D', 'SW4D', 'SW5D', 'SW6D', 'SW7D', 'SW8D', 'SW9D'},
     'Mulch.OUT': {'YEAR', 'DOY', 'DAS', 'MCFD', 'MDEPD', 'MWAD', 'MWTD'},
     'Weather.OUT': {'YEAR', 'DOY', 'DAS', 'PRED', 'DAYLD', 'TWLD', 'SRAD', 'PARD', 'CLDD', 'TMXD', 'TMND', 'TAVD',
-                    'TDYD', 'TDWD', 'TGAD', 'TGRD', 'WDSD', 'CO2D'}
+                    'TDYD', 'TDWD', 'TGAD', 'TGRD', 'WDSD', 'CO2D'},
+    'PlantGrf.OUT': {'YEAR', 'DOY', 'DAS', 'DAP', 'TMEAN', 'GSTD', 'DU', 'VRNFD', 'DYLFD', 'TFPD', 'WFPD', 'NFPD',
+                     'CO2FD', 'RSFPD', 'TFGD', 'WFGD', 'NFGD', 'WFTD', 'NFTD', 'WAVRD', 'WUPRD', 'SWXD', 'EOPD',
+                     'SNXD', 'LN%RD', 'SN%RD', 'RN%RD'}
 }
+
+files_priority = ['ET.OUT', 'PlantGro.OUT', 'SoilWat.OUT', 'Mulch.OUT', 'Weather.OUT', 'PlantGrf.OUT']
 
 # parse inputs
 parser = OptionParser()
@@ -173,7 +177,8 @@ if omitted_value is not None:
     mongo_object['metadata']['omitted_value'] = omitted_value
 
 # Parse variables inside the different files...
-for daily_file, extractable_variables in files_variables.iteritems():
+for daily_file in files_priority:
+    extractable_variables = files_variables[daily_file]
     found_variables = extractable_variables & variables
 
     if len(found_variables) > 0 and os.path.exists(daily_file):
