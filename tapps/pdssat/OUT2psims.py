@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # import modules
 import os, datetime, warnings
@@ -143,18 +143,18 @@ if len(units) != len(variables):
     raise Exception('Number of units must be same as number of variables')
 
 # get all variables
-all_variables = start_idx.keys()
+all_variables = list(start_idx.keys())
 
 # search for variables within list of all variables
 prohibited_variables = ['C#', 'CR', 'MODEL', 'TNAM', 'FNAM', 'WSTA', 'SOIL_ID']
-variable_idx = zeros((len(variables),))
+variable_idx = zeros((len(variables),), dtype=int)
 for i in range(len(variables)):
     v = variables[i]
     if not v in all_variables:
         raise Exception('Variable {:s} not in summary file'.format(v))
     if v in prohibited_variables:
         variable_idx[i] = -1 # skip variable
-        print 'Skipping variable', v
+        print ('Skipping variable', v)
     else:
         variable_idx[i] = all_variables.index(v)
 
@@ -184,8 +184,8 @@ else:
     for i in range(nrows):
         offs = 0 # offset to handle anomalous parsing
         for j in range(ncols):
-            sidx = start_idx.values()[j]
-            eidx = len(data[3]) - 1 if j == ncols - 1 else start_idx.values()[j + 1]
+            sidx = list(start_idx.values())[j]
+            eidx = len(data[3]) - 1 if j == ncols - 1 else list(start_idx.values())[j + 1]
             dstr = data[i + 4][sidx + offs : eidx + offs]
             if '*' in dstr and not dstr.endswith('*'): # '*' not in last position
                 offset = dstr.rfind('*') - len(dstr) + 1
@@ -195,7 +195,7 @@ else:
     # select variables and convert to double
     trim_data = trim_data[:, list(variable_idx)]
     # change values with *, -99.9, -99.90, and 9999999 to -99
-    func = vectorize(lambda x: '*' in x or '-99.9' == x or '-99.90' == x or '9999999' == x)
+    func = vectorize(lambda x: '*' in str(x) or '-99.9' == str(x) or '-99.90' == str(x) or '9999999' == str(x))
     trim_data[func(trim_data)] = '-99'
     # convert to double
     trim_data = trim_data.astype(double)

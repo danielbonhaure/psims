@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
 import os
 import sys
@@ -35,14 +35,14 @@ for fn, checksum in test_sums.iteritems():
     run_file_path = os.path.abspath(os.path.join(run_dir, fn))
 
     if not os.path.isfile(run_file_path):
-        print "File %s was not created in run directory" % fn  
+        print ("File %s was not created in run directory" % fn)  
         ec = 1
         continue
 
     run_file_sum = md5sum(run_file_path)
 
     if test_sums[fn] != run_file_sum:
-        print "File %s generated an incorrect checksum" % fn
+        print ("File %s generated an incorrect checksum" % fn)
         ec = 1
 
 sys.exit(ec)

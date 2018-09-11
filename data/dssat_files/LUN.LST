@@ -1,0 +1,27 @@
+*DSSAT Cropping System Model Ver. 4.6.0.021 -release      JUL 17, 2017; 20:34:03
+
+ Unit  Filename
+  101  OPCLR
+   21  FILEIO
+  102  SIMCDE
+   25  DSPRO
+   22  DTACDE
+  103  RUNLST
+   11  FILEW
+   91  WARNING.OUT
+   10  FILEC
+   69  OUTO
+   39  OUTG
+   40  OUTPN
+   38  OUTPC
+  104  OUTS
+   65  SEVAL
+  105  FILECO2
+   52  OUTWTH
+   32  OUTET
+   13  FILESS
+   55  Mulch.OUT
+   83  SWBAL
+   48  OUTWAT
+    8  FILEA
+   88  OUTINFO

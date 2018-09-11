@@ -1,5 +1,5 @@
 model            dssat45
-root             "/path/to/psims-schmidtfederico"
+root             "/opt/psims"
 soils            $root/campaigns/example/junin/soils
 weather          $root/campaigns/example/junin/weather
 ref_year         1971

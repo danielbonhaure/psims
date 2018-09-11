@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # add paths
 import os, sys
@@ -56,7 +56,7 @@ if not tapp is None:
 infile = nc(inputfile)
 
 # get time
-vlist = infile.variables.keys()
+vlist = list(infile.variables.keys())
 if 'time' in vlist: # make sure time is in file
     time = infile.variables['time'][:]
     time_units = infile.variables['time'].units
@@ -95,7 +95,7 @@ unit_names = array([['mj/m^2', 'mj/m2', 'mjm-2', 'mjm-2day-1', 'mjm-2d-1', 'mj/m
                     ['kmday-1', 'km/day', 'kmdy-1', 'km/dy'], ['oc', 'degc', 'c'], \
                     ['%'], ['kgkg-1', 'kg/kg'], ['mb'], ['oc', 'degc', 'c'], ['mb']])
 
-var_keys  = var_lists.keys()
+var_keys  = list(var_lists.keys())
 var_names = array(var_keys)
 nt, nv    = len(time), len(var_names)
 alldata   = empty((nv, ns, nt))
@@ -192,6 +192,7 @@ infile.close()
 # remove missing nonmandatory variables from array
 alldata   = alldata[: 6]
 found_var = found_var[: 6]
+var_names = var_names[: 6]
 nv        = found_var.sum()
 var_names = var_names[found_var]
 alldata   = alldata[found_var]
@@ -248,6 +249,7 @@ for i in range(ns):
     # write body
     with open(filenames[i], 'w') as f:
         f.write(head)
+    with open(filenames[i], 'ab') as f:
         savetxt(f, concatenate((date, alldata[:, i].T), axis = 1), fmt = ['%.5d'] + ['%6.1f'] * nv, delimiter = '')
 
     # change permissions

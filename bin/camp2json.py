@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # import modules
 from netCDF4 import Dataset as nc
@@ -17,7 +17,7 @@ def list_replace(arr, var, val, occ = nan, cnt = 1):
 
 
 def dict_replace(dic, var, val, occ = nan, cnt = 1):
-    keys = dic.keys()
+    keys = list(dic.keys())
     for i in range(len(keys)):
         key = keys[i]
         item = dic[key]
@@ -49,7 +49,7 @@ def repvals(vals, dimsizes, orders, order):
     def repeat_n(arr, n):
         arr2 = arr.copy()
         sh = list(arr2.shape)
-        sh[0] *= n
+        sh[0] *= int(n)
         arr2 = arr2[newaxis, ...]
         arr2 = repeat(arr2, n, axis = 0)
         arr2 = reshape(arr2, sh)
@@ -134,13 +134,13 @@ if soil_analysis:
     del template['soil']['soilLayer']
 
 # dimensions
-dimensions = campaign.dimensions.keys()
+dimensions = list(campaign.dimensions.keys())
 dimensions.remove('lat') # remove lat, lon
 dimensions.remove('lon')
 soil_layers = []
 if 'soil_layer' in dimensions:
     # Check if the corresponding dimensional variable is defined.
-    if 'soil_layer' not in campaign.variables.keys():
+    if 'soil_layer' not in list(campaign.variables.keys()):
         raise Exception('Missing dimensional variable for soil_layer dimension.')
     # Get the soil horizons/layers.
     soil_layers = campaign.variables['soil_layer'][:]
@@ -165,7 +165,7 @@ for i in range(num_scenarios):
     exp['experiments'].append(copy.deepcopy(template)) # need to deepcopy!
 
 # get variables
-variables = campaign.variables.keys()
+variables = list(campaign.variables.keys())
 variables.remove('lat') # remove lat, lon, and all dimensions
 variables.remove('lon')
 for d in dimensions:

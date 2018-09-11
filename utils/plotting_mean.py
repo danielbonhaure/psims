@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import sys,os,operator
 
@@ -39,9 +39,9 @@ for filename in os.listdir(sys.argv[1]):
     summaries[s.prog] = s
 
 for s in sorted(summaries.values(), key=operator.attrgetter('tsum'), reverse=True):  
-    print "%s: total=%s avg=%s min=%s max=%s count=%s" % ( s.prog.rjust(15),
+    print ("%s: total=%s avg=%s min=%s max=%s count=%s" % ( s.prog.rjust(15),
                                                            hsec(s.tsum).ljust(15),
                                                            hsec(s.average).ljust(10), 
                                                            hsec(s.minimum).ljust(10),
                                                            hsec(s.maximum).ljust(10), 
-                                                           str(s.count).ljust(10))
+                                                           str(s.count).ljust(10)) )

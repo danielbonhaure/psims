@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import os
 
 import sys
@@ -20,7 +20,7 @@ def translate(lat, lon, latdelta, londelta):
     return latidx, lonidx
 
 if len(sys.argv) != 6:
-    print 'Usage: trans_gidx.py latidx1 lonidx1 lat_delta1[,lon_delta1] lat_delta2[,lon_delta2] weathdir2'
+    print ('Usage: trans_gidx.py latidx1 lonidx1 lat_delta1[,lon_delta1] lat_delta2[,lon_delta2] weathdir2')
     sys.exit(1)
 
 latidx    = int(sys.argv[1])
@@ -54,7 +54,7 @@ for i in range(len(lats)):
     dir = sep.join([weathdir2, latidx2, lonidx2])
     wfile = os.path.join(dir, '%s_%s.psims.nc' % (latidx2, lonidx2))
     if isfile(wfile) or len(os.listdir(dir)) > 0:
-        print latidx2 + sep + lonidx2
+        print (latidx2 + sep + lonidx2)
         sys.exit(0) # success
 
 sys.exit(1) # failure

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # import modules
 import json
@@ -383,7 +383,7 @@ class DSSATXFileOutput:
                         if self.__get_obj(evt_data, 'event', dblank) == 'planting':
                             # planting
                             cpar = self.cul_params[evt_data['crid']]
-                            if evt_data.viewkeys() >= set(cpar): # contains all parameters
+                            if evt_data.keys() >= set(cpar): # contains all parameters
                                 for c in cpar:
                                     self.__copy_item(cu_data2, evt_data, c)
                                 self.__copy_item(cu_data2, evt_data, 'crid')
@@ -580,7 +580,7 @@ class DSSATXFileOutput:
                 json_exp_layers = self.__get_obj(sec_data, 'soilLayer', [])
 
                 # Here we'll store the soil horizons for which the experiment.json has data defined.
-                exp_icbl_list = map((lambda l: int(l.get("icbl"))), json_exp_layers)
+                exp_icbl_list = list(map((lambda l: int(l.get("icbl"))), json_exp_layers))
 
                 if not 'icnh4' in sec_data:
                     default_icnh4 = self.__get_obj(json_exp_layers[0], 'icnh4', dR) if json_exp_layers != [] else dR
@@ -1325,5 +1325,5 @@ if cstr != '': open(options.CULfile, 'w').write(cstr)
 # parse soil JSON file and write out SOL file
 sfileoutput = SOLFileOutput(options.sfile, options.efile, use_ptransfer = options.pfcn)
 
-with open(options.SOLfile, 'w') as f:
+with open(options.SOLfile, 'wb') as f:
     f.write(sfileoutput.toSOLFile().encode('ascii', 'ignore'))

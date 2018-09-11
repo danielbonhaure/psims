@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
 # Print info about average task durations by parsing a Swift log
 #
@@ -87,9 +87,9 @@ savg  = ssum / count
 smin  = min(seconds_list)
 smax  = max(seconds_list)
 
-print "%s: total=%s avg=%s min=%s max=%s count=%s" % ( 'Swift tasks'.rjust(15),
+print ("%s: total=%s avg=%s min=%s max=%s count=%s" % ( 'Swift tasks'.rjust(15),
                                                        hsec(ssum).ljust(15),
                                                        hsec(savg).ljust(10),
                                                        hsec(smin).ljust(10),
                                                        hsec(smax).ljust(10),
-                                                       str(count).ljust(10))
+                                                       str(count).ljust(10)) )
