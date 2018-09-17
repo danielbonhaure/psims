@@ -66,8 +66,8 @@ if [ ! -f DSCSM046 ]; then
     clear; echo "Instalando DSSAT"
     sudo unzip -o DSSAT.zip
     sudo chmod 775 DSCSM046
+    sudo rm DSCSM461
 fi
-
 
 # Instalar pSIMS
 clear; echo "Instalando pSIMS"

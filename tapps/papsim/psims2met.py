@@ -13,6 +13,7 @@ from netCDF4 import Dataset as nc
 from optparse import OptionParser
 from collections import OrderedDict as od
 from numpy import empty, array, concatenate, savetxt, zeros, intersect1d, inf, ones, append, resize
+from numpy.compat import asbytes
 
 # search for patterns in variable list
 def isin(var, varlist):
@@ -238,8 +239,8 @@ for i in range(ns):
     head += '()     ()    ' + '   '.join(['({:s})'.format(s) for s in unit_names2]) + '\n'
 
     # write body
-    with open(filenames[i], 'w') as f:
-        f.write(head)
+    with open(filenames[i], 'wb') as f:
+        f.write(asbytes(head))
         savetxt(f, concatenate((years, days, alldata[:, i].T), axis = 1), fmt = ['%d', '%d'] + ['%.3f'] * nv, delimiter = '   ')
 
     # change permissions

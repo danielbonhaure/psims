@@ -13,6 +13,7 @@ from netCDF4 import Dataset as nc
 from optparse import OptionParser
 from collections import OrderedDict as od
 from numpy import empty, array, zeros, concatenate, savetxt, intersect1d, inf, ones, append, resize
+from numpy.compat import asbytes
 
 # search for patterns in variable list
 def isin(var, varlist):
@@ -237,7 +238,7 @@ alldata[0, alldata[0] <= 0.0] = 0.1
 # write files
 filenames = [outputfile] if ns == 1 else ['WTH' + str(i).zfill(5) + '.WTH' for i in range(ns)]
 for i in range(ns):
-    # write header
+    # make header
     head = '*WEATHER DATA : ' + os.path.basename(inputfile) + '\n'
     head += '@ INSI      LAT     LONG  ELEV   TAV   AMP REFHT WNDHT\n    CI'
     head += '%9.3f' % lat
@@ -246,10 +247,9 @@ for i in range(ns):
     head += '%6d' % filler + '%6d' % filler2 + '\n'
     head += '@DATE' + ''.join(['%6s' % v for v in var_names]) + '\n'
 
-    # write body
-    with open(filenames[i], 'w') as f:
-        f.write(head)
-    with open(filenames[i], 'ab') as f:
+    # write output file
+    with open(filenames[i], 'wb') as f:
+        f.write(asbytes(head))
         savetxt(f, concatenate((date, alldata[:, i].T), axis = 1), fmt = ['%.5d'] + ['%6.1f'] * nv, delimiter = '')
 
     # change permissions

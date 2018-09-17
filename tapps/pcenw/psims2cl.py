@@ -6,6 +6,7 @@ from netCDF4 import Dataset as nc
 from optparse import OptionParser
 from collections import OrderedDict as od
 from numpy import array, savetxt, zeros, where, double, interp, concatenate, reshape
+from numpy.compat import asbytes
 
 def writeCL(filename, day, month, year, alldata):
     varnames = ['Max temp', 'min temp', 'radn', 'rainfall', 'co2']
@@ -16,10 +17,10 @@ def writeCL(filename, day, month, year, alldata):
     mat[:, nvars]     = day
     mat[:, nvars + 1] = month
     mat[:, nvars + 2] = [int(str(y)[2 :]) for y in year] # select last two digits
-    with open(filename, 'w') as f:
-        f.write('* Weather file for CenW\n')
-        f.write('* ' + ', '.join(varnames[: nvars]) + ', date (not used)\n')
-        f.write('*\n')
+    with open(filename, 'wb') as f:
+        f.write(asbytes('* Weather file for CenW\n'))
+        f.write(asbytes('* ' + ', '.join(varnames[: nvars]) + ', date (not used)\n'))
+        f.write(asbytes('*\n'))
         savetxt(f, mat, fmt = varfrmts[: nvars] + ['%d/', '%02d/', '%d'], delimiter = '')
     f = os.open(filename, os.O_RDONLY)
     os.fchmod(f, stat.S_IREAD | stat.S_IWRITE | stat.S_IRGRP | stat.S_IWGRP | stat.S_IROTH | stat.S_IWOTH)

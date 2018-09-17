@@ -6,6 +6,7 @@ from netCDF4 import Dataset as nc
 from optparse import OptionParser
 from collections import OrderedDict as od
 from numpy import empty, array, where, reshape, concatenate, savetxt
+from numpy.compat import asbytes
 
 # search for patterns in variable list
 def isin(var, varlist):
@@ -181,10 +182,10 @@ footer += "  </Stations>\n"
 footer += "</WDB>\n"
 
 # write output file
-with open(options.outputfile, 'w') as f:
-    f.write(header)
+with open(options.outputfile, 'wb') as f:
+    f.write(asbytes(header))
     savetxt(f, concatenate((years, days, alldata), axis = 1), fmt = ['%d', '%d'] + ['%.3f'] * nv, delimiter = ',', newline=",\n")
-    f.write(footer)
+    f.write(asbytes(footer))
 
 # change permissions
 f = os.open(options.outputfile, os.O_RDONLY)
