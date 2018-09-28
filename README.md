@@ -1,4 +1,4 @@
-pSIMS
+pSIMS (release-1.0, Python 3 version)
 =====
 pSIMS is a suite of tools, data, and models developed to facilitate access to
 high-resolution climate impact modeling. This system largely automates the 
