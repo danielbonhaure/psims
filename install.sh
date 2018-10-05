@@ -1,6 +1,8 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
-# Usage: install
+# Download this file and execute it!
+# wget https://raw.githubusercontent.com/danielbonhaure/psims/master/install.sh
+#
 
 #if ! hash ifort 2>/dev/null; then
 #    echo "No se encuentra ifort (Intel Fortran Compiler) en PATH."
