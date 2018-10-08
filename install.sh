@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 # Download this file and execute it!
-# wget https://raw.githubusercontent.com/danielbonhaure/psims/master/install.sh
+# wget https://raw.githubusercontent.com/danielbonhaure/psims/master/install.sh --output-document=install-psims.sh
 #
 
 #if ! hash ifort 2>/dev/null; then
