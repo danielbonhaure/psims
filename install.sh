@@ -64,9 +64,13 @@ sudo sed -i 's/SWIFT_HOME=\$.*/SWIFT_HOME=\/opt\/swift\/swift-0.95-RC6/' /opt/sw
 #sudo chmod 775 DSCSM046
 
 # Instalar DSSAT
+clear; echo "Instalando DSSAT"
 if [ ! -f DSCSM046 ]; then
-    clear; echo "Instalando DSSAT"
-    sudo unzip -o DSSAT.zip
+    if [ -f DSSAT.zip ]; then
+        sudo unzip -o DSSAT.zip
+    elif [ -f dssat.zip ]; then
+        sudo unzip -o dssat.zip
+    fi
     sudo chmod 775 DSCSM046
     sudo rm DSCSM461
 fi
@@ -87,7 +91,9 @@ git clone https://github.com/danielbonhaure/psims.git
 
 # Configurar pSIMS para correr localmente.
 clear; echo "Configurando pSIMS"
-mv DSCSM046 psims/bin/DSCSM046
+if [ -f DSCSM046 ]; then
+    mv DSCSM046 psims/bin/DSCSM046
+fi
 sudo mv psims /opt/psims
 sudo chown -R "$USER" /opt/psims
 mkdir /opt/psims/.workdir
@@ -102,4 +108,8 @@ sed -i 's/\/path\/to\/psims-schmidtfederico/\/opt\/psims/' /opt/psims/campaigns/
 # DIR=$(pwd); cd /opt/psims
 # ./psims -s local -p ./campaigns/example/junin/mz/params -c ./campaigns/example/junin/mz -g ./campaigns/example/junin/gridList.txt
 # cd $DIR; unset DIR
+
+if [ ! -f /opt/psims/bin/DSCSM046 ]; then
+    echo "DSSAT executable not found (DSCSM046), please place it in the /opt/psims/bin folder!!"
+fi
 
