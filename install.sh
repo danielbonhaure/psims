@@ -65,14 +65,13 @@ sudo sed -i 's/SWIFT_HOME=\$.*/SWIFT_HOME=\/opt\/swift\/swift-0.95-RC6/' /opt/sw
 
 # Instalar DSSAT
 clear; echo "Instalando DSSAT"
-if [ ! -f DSCSM046 ]; then
+if [ ! -f DSCSM046 ] || [ ! -f DSCSM461 ]; then
     if [ -f DSSAT.zip ]; then
         sudo unzip -o DSSAT.zip
     elif [ -f dssat.zip ]; then
         sudo unzip -o dssat.zip
     fi
-    sudo chmod 775 DSCSM046
-    sudo rm DSCSM461
+    sudo chmod 775 DSCSM*
 fi
 
 # Instalar pSIMS
@@ -93,6 +92,9 @@ git clone https://github.com/danielbonhaure/psims.git
 clear; echo "Configurando pSIMS"
 if [ -f DSCSM046 ]; then
     mv DSCSM046 psims/bin/DSCSM046
+fi
+if [ -f DSCSM461 ]; then
+    mv DSCSM461 psims/bin/DSCSM461
 fi
 sudo mv psims /opt/psims
 sudo chown -R "$USER" /opt/psims
