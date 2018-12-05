@@ -30,7 +30,6 @@ clear; echo "Instalando la JVM de Oracle"
 sudo add-apt-repository -y ppa:webupd8team/java
 sudo apt update
 sudo apt install -y oracle-java8-installer
-sudo apt autoremove
 
 # Instalación de Swift
 clear; echo "Instalando Swift 0.95"
@@ -65,6 +64,7 @@ sudo sed -i 's/SWIFT_HOME=\$.*/SWIFT_HOME=\/opt\/swift\/swift-0.95-RC6/' /opt/sw
 
 # Instalar DSSAT
 clear; echo "Instalando DSSAT"
+sudo apt install -y unzip
 if [ ! -f DSCSM046 ] || [ ! -f DSCSM461 ]; then
     if [ -f DSSAT.zip ]; then
         sudo unzip -o DSSAT.zip
