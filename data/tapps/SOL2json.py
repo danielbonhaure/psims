@@ -34,7 +34,7 @@ layers_var_map = {
 
 # value to fill with if datum is missing
 fill_value = '-99.0'
-coords_regex = re.compile('(-?\d{1,2}(\.\d{1,3})?)')
+coords_regex = re.compile(r'(-?\d{1,2}(\.\d{1,3})?)')
 
 
 def parse_soil_header(header_line):
@@ -69,7 +69,7 @@ def parse_soil_header(header_line):
         soil_texture = splitted[0]
         max_depth = splitted[1]
     if len(splitted) > 2:
-        logging.warn("Texture and max depth are misaligned, maybe soil %s is badly formatted" % soil_id)
+        logging.warning("Texture and max depth are misaligned, maybe soil %s is badly formatted" % soil_id)
         soil_texture = splitted[0]
         max_depth = splitted[1]
         # Change substring offset to avoid losing the first part of the series.
@@ -130,7 +130,7 @@ with open(options.inputfile, mode='r') as soil_file:
     for line in soil_file.readlines():
         file_line_index += 1
 
-        stripped_line = line.decode('utf8').strip()
+        stripped_line = line.strip()
         # Avoid parsing empty lines.
         if len(stripped_line) == 0 or stripped_line.startswith('!'):
             continue
@@ -208,13 +208,13 @@ with open(options.inputfile, mode='r') as soil_file:
                 current_layer_index += 1
 
 # save into bigger dictionary
-all_data = {'soils': soils_dict.values()}
+all_data = {'soils': list(soils_dict.values())}
 
 # save json file
 write_success = False
 with open(options.outputfile, 'w') as out_f:
     try:
-        json.dump(all_data, out_f, indent=4, encoding='utf-8', ensure_ascii=True)
+        json.dump(all_data, out_f, indent=4, ensure_ascii=True)
         print('Wrote %d soils to output file (%s encoded)' % (len(soils_dict), 'utf-8'))
     except UnicodeDecodeError as ex:
         logging.error('Failed to write output JSON file due to unknown encoding.')
