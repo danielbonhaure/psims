@@ -1,4 +1,4 @@
-model            dssat46
+model            dssat45
 root             "/path/to/psims"
 soils            $root/campaigns/example/junin/soils
 weather          $root/campaigns/example/junin/weather
