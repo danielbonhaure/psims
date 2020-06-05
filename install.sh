@@ -27,6 +27,9 @@ while [[ $# -gt 0 ]]; do
     -V|--dssat-version)
       DSSAT_VERSION=$2
       ;;
+    -t|--test-installation)
+      TEST_INSTALLATION=true
+      ;;
     -h|--help)
       echo -e "Usage: install-psims [options] ... \n"
       echo -e "Clone, configure and install pSIMS \n"
@@ -36,6 +39,7 @@ while [[ $# -gt 0 ]]; do
       echo -e " -F, --dssat-folder <arg>      \t DSSAT folder absolute path. Default: /opt/dssat"
       echo -e " -E, --dssat-executable <arg>  \t DSSAT executable (in DSSAT folder). Default: dscsm047"
       echo -e " -V, --dssat-version <arg>     \t DSSAT version. Default: 47"
+      echo -e " -t, --test-installation       \t Auto-run pSIMS after installation is complete."
       echo -e " -h, --help                    \t Display a help message and quit."
       exit
       ;;
@@ -118,7 +122,7 @@ new_script "Instalando pSIMS"
 # Descargar pSIMS
 new_section "Descargando pSIMS"
 [[ -d $PSIMS_FOLDER ]] && sudo rm -rf $PSIMS_FOLDER
-git clone https://github.com/danielbonhaure/psims.git
+git clone -b remove-dssat-files https://github.com/danielbonhaure/psims.git
 
 # Configurar pSIMS para correr localmente.
 new_section "Configurando pSIMS"
@@ -131,17 +135,22 @@ chmod -R 777 $PSIMS_FOLDER/.taskdir
 sed -i '0,/workDir/{s|workDir=.*|workDir='$PSIMS_FOLDER'/.workdir|g}' $PSIMS_FOLDER/conf/swift.properties
 sed -i '0,/taskDir/{s|taskDir=.*|taskDir='$PSIMS_FOLDER'/.taskdir|g}' $PSIMS_FOLDER/conf/swift.properties
 sed -i 's|/path/to/psims|'$PSIMS_FOLDER'|g' $PSIMS_FOLDER/campaigns/example/junin/mz/params
-sed -i 's|MZCER046.CUL|MZCER0'$DSSAT_VERSION'.CUL|g' $PSIMS_FOLDER/campaigns/example/junin/mz/params
-sed -i 's|DSCSM046|'$DSSAT_FOLDER'/'$DSSAT_EXECUTABLE'|g' $PSIMS_FOLDER/campaigns/example/junin/mz/params
+sed -i 's|MZCER0XX|MZCER0'$DSSAT_VERSION'|g' $PSIMS_FOLDER/campaigns/example/junin/mz/params
+sed -i 's|DSCSM0XX|'$DSSAT_FOLDER'/'$DSSAT_EXECUTABLE'|g' $PSIMS_FOLDER/campaigns/example/junin/mz/params
 sed -i 's|/path/to/dssat|'$DSSAT_FOLDER'|g' $PSIMS_FOLDER/campaigns/example/junin/mz/params
+if [[ ! `grep -w UAIC10 $DSSAT_FOLDER/Genotype/MZCER0${DSSAT_VERSION}.CUL` ]]; then
+  sudo sh -c 'printf "\n! Added for test pSIMS\n" >> '$DSSAT_FOLDER'/Genotype/MZCER0'$DSSAT_VERSION'.CUL'
+  sudo sh -c 'echo "UAIC10 DK 682   120 GSP     . IB0001 245.0 0.000 820.0 950.0  7.50 45.00" >> '$DSSAT_FOLDER'/Genotype/MZCER0'$DSSAT_VERSION'.CUL'
+fi
 
-new_section "Probando pSIMS"
-# Para probar la instalación seguir el tutorial en:
-# https://github.com/danielbonhaure/psims/blob/master/campaigns/example/junin/README.md
-DIR=$(pwd); cd $PSIMS_FOLDER
-./psims -s local -p ./campaigns/example/junin/mz/params -c ./campaigns/example/junin/mz -g ./campaigns/example/junin/gridList.txt
-sudo rm -rf run001;  cd $DIR; unset DIR
-
+if [[ $TEST_INSTALLATION ]]; then
+  new_section "Probando pSIMS"
+  # Para probar la instalación seguir el tutorial en:
+  # https://github.com/danielbonhaure/psims/blob/master/campaigns/example/junin/README.md
+  DIR=$(pwd); cd $PSIMS_FOLDER
+  ./psims -s local -p ./campaigns/example/junin/mz/params -c ./campaigns/example/junin/mz -g ./campaigns/example/junin/gridList.txt
+  sudo rm -rf run001;  cd $DIR; unset DIR
+fi
 #
 #
 #
