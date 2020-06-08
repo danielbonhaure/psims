@@ -44,13 +44,13 @@ readonly DSSAT_VERSION=${DSSAT_VERSION:-47}
 
 # check dependencies
 [[ ! -n `which git` ]] &&
-  echo ${red}"Git does not seem to be installed on your system! Please install it to continue (sudo apt install git)."${reset} &&
+  report_error "Git does not seem to be installed on your system! Please install it to continue (sudo apt install git)." &&
   exit 1
 [[ ! -n `which unzip` ]] &&
-  echo ${red}"Unzip does not seem to be installed on your system! Please install it to continue (sudo apt install unzip). "${reset} &&
+  report_error "Unzip does not seem to be installed on your system! Please install it to continue (sudo apt install unzip)." &&
   exit 1
 [[ ! -n `which run_dssat` ]] &&
-  echo ${red}"DSSAT does not seem to be installed on your system! Please install it to continue (see: https://github.com/danielbonhaure/dssat-installation)."${reset} &&
+  report_error "DSSAT does not seem to be installed on your system! Please install it to continue (see: https://github.com/danielbonhaure/dssat-installation)." &&
   exit 1
 
 #
