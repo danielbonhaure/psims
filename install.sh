@@ -8,43 +8,31 @@
 wget --quiet https://raw.githubusercontent.com/danielbonhaure/psims/master/gutils.sh --output-document=gutils.sh
 source gutils.sh; test $? -ne 0 && exit 1
 
+# print usage help message
+usage() {
+  echo -e "Usage: install-psims [options] ... \n"
+  echo -e "Clone, configure and install pSIMS \n"
+  echo -e "Options:"
+  echo -e " -f, --dest-folder <arg>       \t Installation folder absolute path. Default: /opt/psims"
+  echo -e " -s, --swift-dest-folder <arg> \t Installation folder absolute path for swift. Default: /opt/swift"
+  echo -e " -F, --dssat-folder <arg>      \t DSSAT folder absolute path. Default: /opt/dssat"
+  echo -e " -E, --dssat-executable <arg>  \t DSSAT executable (in DSSAT folder). Default: dscsm047"
+  echo -e " -V, --dssat-version <arg>     \t DSSAT version. Default: 47"
+  echo -e " -t, --test-installation       \t Auto-run pSIMS after installation is complete."
+  echo -e " -h, --help                    \t Display a help message and quit."
+}
+
 # process script inputs
 while [[ $# -gt 0 ]]; do
   case $1 in
-    -f|--dest-folder)
-      PSIMS_FOLDER=$2
-      SWIFT_FOLDER=${PSIMS_FOLDER%/*}/swift
-      ;;
-    -s|--swift-dest-folder)
-      SWIFT_FOLDER=$2
-      ;;
-    -F|--dssat-folder)
-      DSSAT_FOLDER=$2
-      ;;
-    -E|--dssat-executable)
-      DSSAT_EXECUTABLE=$2
-      ;;
-    -V|--dssat-version)
-      DSSAT_VERSION=$2
-      ;;
-    -t|--test-installation)
-      TEST_INSTALLATION=true
-      ;;
-    -h|--help)
-      echo -e "Usage: install-psims [options] ... \n"
-      echo -e "Clone, configure and install pSIMS \n"
-      echo -e "Options:"
-      echo -e " -f, --dest-folder <arg>       \t Installation folder absolute path. Default: /opt/psims"
-      echo -e " -s, --swift-dest-folder <arg> \t Installation folder absolute path for swift. Default: /opt/swift"
-      echo -e " -F, --dssat-folder <arg>      \t DSSAT folder absolute path. Default: /opt/dssat"
-      echo -e " -E, --dssat-executable <arg>  \t DSSAT executable (in DSSAT folder). Default: dscsm047"
-      echo -e " -V, --dssat-version <arg>     \t DSSAT version. Default: 47"
-      echo -e " -t, --test-installation       \t Auto-run pSIMS after installation is complete."
-      echo -e " -h, --help                    \t Display a help message and quit."
-      exit
-      ;;
+    -f|--dest-folder) PSIMS_FOLDER=$2; SWIFT_FOLDER=${PSIMS_FOLDER%/*}/swift; shift 2;;
+    -s|--swift-dest-folder) SWIFT_FOLDER=$2; shift 2;;
+    -F|--dssat-folder) DSSAT_FOLDER=$2; shift 2;;
+    -E|--dssat-executable) DSSAT_EXECUTABLE=$2; shift 2;;
+    -V|--dssat-version) DSSAT_VERSION=$2; shift 2;;
+    -t|--test-installation) TEST_INSTALLATION=true; shift 1;;
+    -h|--help|*) usage; exit;;
   esac
-  shift
 done
 
 # set default values when needed
@@ -123,6 +111,7 @@ new_script "Instalando pSIMS"
 new_section "Descargando pSIMS"
 [[ -d $PSIMS_FOLDER ]] && sudo rm -rf $PSIMS_FOLDER
 git clone -b remove-dssat-files https://github.com/danielbonhaure/psims.git
+test $? -ne 0 && exit 1
 
 # Configurar pSIMS para correr localmente.
 new_section "Configurando pSIMS"
@@ -138,6 +127,7 @@ sed -i 's|/path/to/psims|'$PSIMS_FOLDER'|g' $PSIMS_FOLDER/campaigns/example/juni
 sed -i 's|MZCER0XX|MZCER0'$DSSAT_VERSION'|g' $PSIMS_FOLDER/campaigns/example/junin/mz/params
 sed -i 's|DSCSM0XX|'$DSSAT_FOLDER'/'$DSSAT_EXECUTABLE'|g' $PSIMS_FOLDER/campaigns/example/junin/mz/params
 sed -i 's|/path/to/dssat|'$DSSAT_FOLDER'|g' $PSIMS_FOLDER/campaigns/example/junin/mz/params
+sed -i 's|--dssat_version XX|--dssat_version '$DSSAT_VERSION'|g' $PSIMS_FOLDER/campaigns/example/junin/mz/params
 if [[ ! `grep -w UAIC10 $DSSAT_FOLDER/Genotype/MZCER0${DSSAT_VERSION}.CUL` ]]; then
   sudo sh -c 'printf "\n! Added for test pSIMS\n" >> '$DSSAT_FOLDER'/Genotype/MZCER0'$DSSAT_VERSION'.CUL'
   sudo sh -c 'echo "UAIC10 DK 682   120 GSP     . IB0001 245.0 0.000 820.0 950.0  7.50 45.00" >> '$DSSAT_FOLDER'/Genotype/MZCER0'$DSSAT_VERSION'.CUL'
@@ -151,6 +141,7 @@ if [[ $TEST_INSTALLATION ]]; then
   ./psims -s local -p ./campaigns/example/junin/mz/params -c ./campaigns/example/junin/mz -g ./campaigns/example/junin/gridList.txt
   sudo rm -rf run001;  cd $DIR; unset DIR
 fi
+
 #
 #
 #

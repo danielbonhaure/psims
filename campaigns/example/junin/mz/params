@@ -25,6 +25,6 @@ outtypes         .WTH,.MZX,.SOL,y.OUT
 variables        HWAM
 var_units        "kg/ha"
 long_names       "Yield"
-postprocess      "OUT2psims.py -i Summary.OUT"
+postprocess      "OUT2psims.py -i Summary.OUT --dssat_version XX"
 PATH             $PATH:"$root/tapps/pdssat/":"$root/tapps/common/"
 out_file         junin.mai
