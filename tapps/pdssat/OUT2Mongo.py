@@ -143,12 +143,12 @@ mongo_dbname = options.dbname
 mongo_collection = options.collection
 collection_field = options.collection_field
 
-if mongo_dbname not in mongo_connection.database_names():
+if mongo_dbname not in mongo_connection.list_database_names():
     raise Exception("Database \"%s\" not found at MongoDB connection \"%s\"." % (mongo_dbname, connection_string))
 
 db = mongo_connection[mongo_dbname]
 
-if mongo_collection not in db.collection_names():
+if mongo_collection not in db.list_collection_names():
     raise Exception("Collection \"%s\" not found in database \"%s\"." % (mongo_collection, mongo_dbname))
 
 simulation_data_file = options.simulation_data
@@ -210,8 +210,14 @@ with open(options.inputfile) as summary:
             # Find all variables names inside the summary header.
             summary_variables = variables_names_regex.findall(line)
             double_variables_indexes = {summary_variables.index(v) for v in variables}
-            # Variables at indexes between 5 and 10 are string variables and shouldn't be parsed to float.
-            str_variables_indexes = set(filter(lambda x: 4 < x < 11, double_variables_indexes))
+            if 'EXNAME' not in line:
+                # DSSAT 4.5 or 4.6
+            	# Variables at indexes between 5 and 10 are string variables and shouldn't be parsed to float.
+            	str_variables_indexes = set(filter(lambda x: 4 < x < 11, double_variables_indexes))
+            else:
+                # DSSAT 4.7
+            	# Variables at indexes between 5 and 11 are string variables and shouldn't be parsed to float.
+            	str_variables_indexes = set(filter(lambda x: 4 < x < 12, double_variables_indexes))
             double_variables_indexes -= str_variables_indexes
 
             # Create numpy arrays to store floats and strings.
@@ -244,9 +250,11 @@ with open(options.inputfile) as summary:
                     val = -99.
             except:
                 val = -99.
-            double_variables_values[scen_index][year_index][i] = val
+            if scen_index < num_scenarios:
+                double_variables_values[scen_index][year_index][i] = val
 
-        str_variables_values[scen_index][year_index][:] = [exp_variables_values[var_idx] for var_idx in str_variables_indexes]
+        if scen_index < num_scenarios:
+            str_variables_values[scen_index][year_index][:] = [exp_variables_values[var_idx] for var_idx in str_variables_indexes]
 
 # After parsing the summary file, we add the results to a python dictionary (the object that will be inserted in the
 # Mongo database).
