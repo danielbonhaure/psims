@@ -25,15 +25,15 @@ default_var_names = {'SDAT': 'Simulation start date', 'PDAT': 'Planting date',
                      'DRCM': 'Season water drainage', 'SWXM': 'Extractable water at maturity',
                      'NI#M': 'N applications', 'NICM': 'Inorganic N applied',
                      'NFXM': 'N fixed during season (kg/ha)', 'NUCM': 'N uptake during season',
-                     'NLCM': 'N leached during season', 'NIAM': 'Inorganic N at maturity',
-                     'CNAM': 'Tops N at maturity', 'GNAM': 'Grain N at maturity',
+                     'NLCM': 'N leached during season', 'NIAM': 'Inorganic N at maturity', 'NMINC': 'Cumulative seasonal net N mineralization',
+                     'CNAM': 'Tops N at maturity', 'GNAM': 'Grain N at maturity', 'N2OEC': 'Cumulative N2O emissions from soil',
                      'PI#M': 'Number of P applications', 'PICM': 'Inorganic P applied',
                      'PUPC': 'Seasonal cumulative P uptake', 'SPAM': 'Soil P at maturity',
-                     'KI#M': 'Number of K applications', 'KUPC': 'Seasonal cumulative K uptake',
+                     'KI#M': 'Number of K applications', 'KICM': 'Inorganic K applied', 'KUPC': 'Seasonal cumulative K uptake',
                      'SKAM': 'Soil K at maturity', 'RECM': 'Residue applied',
                      'ONTAM': 'Total organic N at maturity, soil and surface', 'ONAM': 'Organic soil N at maturity',
                      'OPTAM': 'Total organic P at maturity, soil and surface', 'OPAM': 'Organic soil P at maturity',
-                     'OCTAM': 'Total organic C at maturity, soil and surface', 'OCAM': 'Organic soil C at maturity',
+                     'OCTAM': 'Total organic C at maturity, soil and surface', 'OCAM': 'Organic soil C at maturity', 'CO2EC': 'Cumulative CO2 emissions from soil',
                      'DMPPM': 'Dry matter-rainfall productivity', 'DMPEM': 'Dry matter-ET productivity',
                      'DMPTM': 'Dry matter-transp. productivity', 'DMPIM': 'Dry matter-irrigation productivity',
                      'YPPM': 'Yield-rainfall productivity', 'YPEM': 'Yield-ET productivity',
@@ -45,7 +45,8 @@ default_var_names = {'SDAT': 'Simulation start date', 'PDAT': 'Planting date',
                      'DAYLA': 'Average daylength, planting - harvest',
                      'CO2A': 'Average atmospheric CO2, planting - harvest',
                      'PRCP': 'Total season precipitation, planting - harvest',
-                     'ETCP': 'Total evapotransportation, planting - harvest'}
+                     'ETCP': 'Total evapotransportation, planting - harvest',
+                     '´ESCP': 'Total soil evaporation, planting to harvest', 'EPCP': 'Total transpiration, planting to harvest'}
 default_var_units = {'SDAT': 'YrDoy', 'PDAT': 'Doy',
                      'EDAT': 'YrDoy', 'ADAT': 'Days since planting',
                      'MDAT': 'Days since planting', 'HDAT': 'YrDoy',
@@ -61,15 +62,15 @@ default_var_units = {'SDAT': 'YrDoy', 'PDAT': 'Doy',
                      'DRCM': 'mm', 'SWXM': 'mm',
                      'NI#M': 'no', 'NICM': 'kg [N]/ha',
                      'NFXM': 'kg/ha', 'NUCM': 'kg [N]/ha',
-                     'NLCM': 'kg [N]/ha', 'NIAM': 'kg [N]/ha',
-                     'CNAM': 'kg/ha', 'GNAM': 'kg/ha',
+                     'NLCM': 'kg [N]/ha', 'NIAM': 'kg [N]/ha', 'NMINC': 'kg [N]/ha',
+                     'CNAM': 'kg/ha', 'GNAM': 'kg/ha', 'N2OEC': 'kg [N]/ha',
                      'PI#M': 'no', 'PICM': 'kg/ha',
                      'PUPC': 'kg [P]/ha', 'SPAM': 'kg/ha',
-                     'KI#M': 'no', 'KUPC': 'kg [K]/ha',
+                     'KI#M': 'no', 'KICM': 'kg/ha', 'KUPC': 'kg [K]/ha',
                      'SKAM': 'kg/ha', 'RECM': 'kg/ha',
                      'ONTAM': 'kg/ha', 'ONAM': 'kg/ha',
                      'OPTAM': 'kg/ha', 'OPAM': 'kg/ha',
-                     'OCTAM': 'kg/ha', 'OCAM': 'kg/ha',
+                     'OCTAM': 'kg/ha', 'OCAM': 'kg/ha', 'CO2EC': 'kg [C]/ha',
                      'DMPPM': 'kg [DM]/ha/mm [rain]', 'DMPEM': 'kg [DM]/ha/mm [ET]',
                      'DMPTM': 'kg [DM]/ha/mm [EP]', 'DMPIM': 'kg [DM]/ha/mm [irrig]',
                      'YPPM': 'kg [yield]/ha/mm [rain]', 'YPEM': 'kg [yield]/ha/mm [ET]',
@@ -79,7 +80,8 @@ default_var_units = {'SDAT': 'YrDoy', 'PDAT': 'Doy',
                      'NDCH': 'd', 'TMAXA': 'deg C',
                      'TMINA': 'deg C', 'SRADA': 'MJ/m2/d',
                      'DAYLA': 'hr/d', 'CO2A': 'ppm',
-                     'PRCP': 'mm', 'ETCP': 'mm'}
+                     'PRCP': 'mm', 'ETCP': 'mm',
+                     'ESCP': 'mm', 'EPCP': 'mm'}
 
 # parse inputs
 parser = OptionParser()
@@ -141,12 +143,12 @@ mongo_dbname = options.dbname
 mongo_collection = options.collection
 collection_field = options.collection_field
 
-if mongo_dbname not in mongo_connection.database_names():
+if mongo_dbname not in mongo_connection.list_database_names():
     raise Exception("Database \"%s\" not found at MongoDB connection \"%s\"." % (mongo_dbname, connection_string))
 
 db = mongo_connection[mongo_dbname]
 
-if mongo_collection not in db.collection_names():
+if mongo_collection not in db.list_collection_names():
     raise Exception("Collection \"%s\" not found in database \"%s\"." % (mongo_collection, mongo_dbname))
 
 simulation_data_file = options.simulation_data
@@ -208,8 +210,14 @@ with open(options.inputfile) as summary:
             # Find all variables names inside the summary header.
             summary_variables = variables_names_regex.findall(line)
             double_variables_indexes = {summary_variables.index(v) for v in variables}
-            # Variables at indexes between 5 and 10 are string variables and shouldn't be parsed to float.
-            str_variables_indexes = set(filter(lambda x: 4 < x < 11, double_variables_indexes))
+            if 'EXNAME' not in line:
+                # DSSAT 4.5 or 4.6
+            	# Variables at indexes between 5 and 10 are string variables and shouldn't be parsed to float.
+            	str_variables_indexes = set(filter(lambda x: 4 < x < 11, double_variables_indexes))
+            else:
+                # DSSAT 4.7
+            	# Variables at indexes between 5 and 11 are string variables and shouldn't be parsed to float.
+            	str_variables_indexes = set(filter(lambda x: 4 < x < 12, double_variables_indexes))
             double_variables_indexes -= str_variables_indexes
 
             # Create numpy arrays to store floats and strings.
@@ -242,9 +250,11 @@ with open(options.inputfile) as summary:
                     val = -99.
             except:
                 val = -99.
-            double_variables_values[scen_index][year_index][i] = val
+            if scen_index < num_scenarios:
+                double_variables_values[scen_index][year_index][i] = val
 
-        str_variables_values[scen_index][year_index][:] = [exp_variables_values[var_idx] for var_idx in str_variables_indexes]
+        if scen_index < num_scenarios:
+            str_variables_values[scen_index][year_index][:] = [exp_variables_values[var_idx] for var_idx in str_variables_indexes]
 
 # After parsing the summary file, we add the results to a python dictionary (the object that will be inserted in the
 # Mongo database).

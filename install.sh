@@ -1,26 +1,63 @@
 #!/usr/bin/env bash
 #
 # Download this file and execute it!
-# wget https://raw.githubusercontent.com/danielbonhaure/psims/master/install.sh --output-document=install-psims.sh
+# wget https://raw.githubusercontent.com/danielbonhaure/psims/master/install.sh --output-document=install-psims
 #
 
-sudo echo ""; if [[ $? -ne 0 ]] ; then exit 1; fi
+# import gutils.sh
 wget --quiet https://raw.githubusercontent.com/danielbonhaure/psims/master/gutils.sh --output-document=gutils.sh
-source gutils.sh; if [[ $? -ne 0 ]] ; then exit 1; fi
+source gutils.sh; test $? -ne 0 && exit 1
+
+# print usage help message
+usage() {
+  echo -e "Usage: install-psims [options] ... \n"
+  echo -e "Clone, configure and install pSIMS \n"
+  echo -e "Options:"
+  echo -e " -f, --dest-folder <arg>       \t Installation folder absolute path. Default: /opt/psims"
+  echo -e " -s, --swift-dest-folder <arg> \t Installation folder absolute path for swift. Default: /opt/swift"
+  echo -e " -F, --dssat-folder <arg>      \t DSSAT folder absolute path. Default: /opt/dssat"
+  echo -e " -E, --dssat-executable <arg>  \t DSSAT executable (in DSSAT folder). Default: dscsm047"
+  echo -e " -V, --dssat-version <arg>     \t DSSAT version. Default: 47"
+  echo -e " -t, --test-installation       \t Auto-run pSIMS after installation is complete."
+  echo -e " -h, --help                    \t Display a help message and quit."
+}
+
+# process script inputs
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    -f|--dest-folder) PSIMS_FOLDER=$2; SWIFT_FOLDER=${PSIMS_FOLDER%/*}/swift; shift 2;;
+    -s|--swift-dest-folder) SWIFT_FOLDER=$2; shift 2;;
+    -F|--dssat-folder) DSSAT_FOLDER=$2; shift 2;;
+    -E|--dssat-executable) DSSAT_EXECUTABLE=$2; shift 2;;
+    -V|--dssat-version) DSSAT_VERSION=$2; shift 2;;
+    -t|--test-installation) TEST_INSTALLATION=true; shift 1;;
+    -h|--help|*) usage; exit;;
+  esac
+done
+
+# set default values when needed
+readonly PSIMS_FOLDER=${PSIMS_FOLDER:-/opt/psims}
+readonly SWIFT_FOLDER=${SWIFT_FOLDER:-/opt/swift}
+readonly DSSAT_FOLDER=${DSSAT_FOLDER:-/opt/dssat}
+readonly DSSAT_EXECUTABLE=${DSSAT_EXECUTABLE:-dscsm047}
+readonly DSSAT_VERSION=${DSSAT_VERSION:-47}
+
+# check dependencies
+[[ ! -n `which git` ]] &&
+  report_error "Git does not seem to be installed on your system! Please install it to continue (sudo apt install git)." &&
+  exit 1
+[[ ! -n `which unzip` ]] &&
+  report_error "Unzip does not seem to be installed on your system! Please install it to continue (sudo apt install unzip)." &&
+  exit 1
+[[ ! -n `which run_dssat` ]] &&
+  report_error "DSSAT does not seem to be installed on your system! Please install it to continue (see: https://github.com/danielbonhaure/dssat-installation)." &&
+  exit 1
 
 #
 #
 #
-
 
 new_script "Instalando dependencias"
-
-
-#if ! hash ifort 2>/dev/null; then
-#    report_error "No se encuentra ifort (Intel Fortran Compiler) en PATH."
-#    exit 1
-#fi
-
 
 # Actualizar repos
 new_section "Actualizando repositorios"
@@ -28,106 +65,81 @@ sudo apt update
 
 # Instalación de pyhton3
 new_section "Instalando python3"
-sudo apt install -y python3 python3-dev python3-software-properties
+sudo apt install -y python3 python3-dev python3-software-properties; test $? -ne 0 && exit 1
 
 # Instalación de NetCDF
 new_section "Instalando NetCDF"
-sudo apt install -y netcdf-bin nco libhdf5-dev libnetcdf-dev
+sudo apt install -y netcdf-bin nco libhdf5-dev libnetcdf-dev; test $? -ne 0 && exit 1
 
 # Instalación de Python-NetCDF
 new_section "Instalando Python-NetCDF"
-sudo apt install -y python3-netcdf4 
+sudo apt install -y python3-netcdf4; test $? -ne 0 && exit 1
 
 # Instalación la JVM de Oracle
-new_section "Instalando la JVM de Oracle"
-sudo add-apt-repository -y ppa:webupd8team/java
-sudo apt update
-sudo apt install -y oracle-java8-installer
+if [[ ! -n `which java` ]] || [[ ! -n `java -version 2>&1 | grep -w 1.8` ]]; then
+  new_section "Instalando JDK 8"
+  if [[ `lsb_release -is` == "Debian" ]] && [[ `lsb_release -rs` == 10 ]]; then
+    sudo sh -c 'echo "deb http://deb.debian.org/debian/ stretch main" >> /etc/apt/sources.list.d/java-8-debian.list'
+    sudo apt update
+  fi
+  sudo apt install -y openjdk-8-jdk; test $? -ne 0 && exit 1
+  sudo update-alternatives --config java
+fi
 
 # Instalación de Swift
-new_section "Instalando Swift 0.95"
-if [ -d /opt/swift ]; then
-    sudo rm -rf /opt/swift
-fi
-sudo mkdir /opt/swift
-sudo wget http://swift-lang.org/packages/swift-0.95-RC6.tar.gz
-sudo tar -zxf swift-0.95-RC6.tar.gz
-sudo mv swift-0.95-RC6 /opt/swift/swift-0.95-RC6
-sudo rm -f swift-0.95-RC6.tar.gz
-sudo ln -s /opt/swift/swift-0.95-RC6/bin/swift /usr/bin/swift
-# Fijamos el path a SWIFT_HOME dentro del ejecutable de swift (no lo encuentra solo porque creamos un symlink).
-sudo sed -i 's/SWIFT_HOME=\$.*/SWIFT_HOME=\/opt\/swift\/swift-0.95-RC6/' /opt/swift/swift-0.95-RC6/bin/swift
-
-# Compilar DSSAT
-#new_section "Compilando DSSAT"
-#sudo tar -zxf dssat-csm-4.6.0.21.tar.gz
-#sudo chmod -R 777 dssat-csm-4.6.0.21
-#cd dssat-csm-4.6.0.21/
-#make all
-#
-#if [ ! -f DSCSM046.EXE ]; then
-#    report_error "DSSAT compilation failed."
-#    exit 1
-#fi
-#
-#mv DSCSM046.EXE ../DSCSM046
-#cd ..
-#rm -rf dssat-csm-4.6.0.21
-#sudo chmod 775 DSCSM046
-
-# Instalar DSSAT
-new_section "Instalando DSSAT"
-sudo apt install -y unzip
-if [ ! -f DSCSM046 ] || [ ! -f DSCSM461 ]; then
-    if [ -f DSSAT.zip ]; then
-        sudo unzip -o DSSAT.zip
-    elif [ -f dssat.zip ]; then
-        sudo unzip -o dssat.zip
-    fi
-    sudo chmod 775 DSCSM*
+if [[ ! -n `which swift` ]]; then
+  new_section "Instalando Swift 0.95"
+  [[ -d $SWIFT_FOLDER ]] && sudo rm -rf $SWIFT_FOLDER
+  sudo mkdir $SWIFT_FOLDER
+  sudo wget http://swift-lang.org/packages/swift-0.95-RC6.tar.gz
+  sudo tar -zxf swift-0.95-RC6.tar.gz
+  sudo mv swift-0.95-RC6 $SWIFT_FOLDER/swift-0.95-RC6
+  sudo rm -f swift-0.95-RC6.tar.gz
+  sudo ln -s $SWIFT_FOLDER/swift-0.95-RC6/bin/swift /usr/bin/swift
+  # Fijamos el path a SWIFT_HOME dentro del ejecutable de swift (no lo encuentra solo porque creamos un symlink).
+  sudo sed -i 's|SWIFT_HOME=\$.*|SWIFT_HOME='$SWIFT_FOLDER'/swift-0.95-RC6|g' $SWIFT_FOLDER/swift-0.95-RC6/bin/swift
 fi
 
+#
+#
+#
 
 # Instalar pSIMS
 new_script "Instalando pSIMS"
 
-
-# Instalar git
-new_section "Instalando Git"
-sudo apt install -y git
-
 # Descargar pSIMS
 new_section "Descargando pSIMS"
-if [ -d /opt/psims ]; then
-    sudo rm -rf /opt/psims
-fi
-git clone https://github.com/danielbonhaure/psims.git
+[[ -d $PSIMS_FOLDER ]] && sudo rm -rf $PSIMS_FOLDER
+git clone -b remove-dssat-files https://github.com/danielbonhaure/psims.git
+test $? -ne 0 && exit 1
 
 # Configurar pSIMS para correr localmente.
 new_section "Configurando pSIMS"
-if [ -f DSCSM046 ]; then
-    mv DSCSM046 psims/bin/DSCSM046
+sudo mv psims $PSIMS_FOLDER
+sudo chown -R "$USER" $PSIMS_FOLDER
+mkdir $PSIMS_FOLDER/.workdir
+chmod -R 777 $PSIMS_FOLDER/.workdir
+mkdir $PSIMS_FOLDER/.taskdir
+chmod -R 777 $PSIMS_FOLDER/.taskdir
+sed -i '0,/workDir/{s|workDir=.*|workDir='$PSIMS_FOLDER'/.workdir|g}' $PSIMS_FOLDER/conf/swift.properties
+sed -i '0,/taskDir/{s|taskDir=.*|taskDir='$PSIMS_FOLDER'/.taskdir|g}' $PSIMS_FOLDER/conf/swift.properties
+sed -i 's|/path/to/psims|'$PSIMS_FOLDER'|g' $PSIMS_FOLDER/campaigns/example/junin/mz/params
+sed -i 's|MZCER0XX|MZCER0'$DSSAT_VERSION'|g' $PSIMS_FOLDER/campaigns/example/junin/mz/params
+sed -i 's|DSCSM0XX|'$DSSAT_FOLDER'/'$DSSAT_EXECUTABLE'|g' $PSIMS_FOLDER/campaigns/example/junin/mz/params
+sed -i 's|/path/to/dssat|'$DSSAT_FOLDER'|g' $PSIMS_FOLDER/campaigns/example/junin/mz/params
+sed -i 's|--dssat_version XX|--dssat_version '$DSSAT_VERSION'|g' $PSIMS_FOLDER/campaigns/example/junin/mz/params
+if [[ ! `grep -w UAIC10 $DSSAT_FOLDER/Genotype/MZCER0${DSSAT_VERSION}.CUL` ]]; then
+  sudo sh -c 'printf "\n! Added for test pSIMS\n" >> '$DSSAT_FOLDER'/Genotype/MZCER0'$DSSAT_VERSION'.CUL'
+  sudo sh -c 'echo "UAIC10 DK 682   120 GSP     . IB0001 245.0 0.000 820.0 950.0  7.50 45.00" >> '$DSSAT_FOLDER'/Genotype/MZCER0'$DSSAT_VERSION'.CUL'
 fi
-if [ -f DSCSM461 ]; then
-    mv DSCSM461 psims/bin/DSCSM461
-fi
-sudo mv psims /opt/psims
-sudo chown -R "$USER" /opt/psims
-mkdir /opt/psims/.workdir
-chmod -R 777 /opt/psims/.workdir
-mkdir /opt/psims/.taskdir
-chmod -R 777 /opt/psims/.taskdir
-sed -i '0,/workDir/{s/workDir=.*/workDir=\/opt\/psims\/.workdir/}' /opt/psims/conf/swift.properties
-sed -i '0,/taskDir/{s/taskDir=.*/taskDir=\/opt\/psims\/.taskdir/}' /opt/psims/conf/swift.properties
-# Para probar la instalación seguir el tutorial en:
-# https://github.com/schmidtfederico/psims/tree/master/campaigns/example/junin
-sed -i 's/\/path\/to\/psims-schmidtfederico/\/opt\/psims/' /opt/psims/campaigns/example/junin/mz/params
-# DIR=$(pwd); cd /opt/psims
-# ./psims -s local -p ./campaigns/example/junin/mz/params -c ./campaigns/example/junin/mz -g ./campaigns/example/junin/gridList.txt
-# cd $DIR; unset DIR
 
-if [ ! -f /opt/psims/bin/DSCSM046 ]; then
-    report_warning "DSSAT executable not found (DSCSM046), please place it in the /opt/psims/bin folder!!"
+if [[ $TEST_INSTALLATION ]]; then
+  new_section "Probando pSIMS"
+  # Para probar la instalación seguir el tutorial en:
+  # https://github.com/danielbonhaure/psims/blob/master/campaigns/example/junin/README.md
+  DIR=$(pwd); cd $PSIMS_FOLDER
+  ./psims -s local -p ./campaigns/example/junin/mz/params -c ./campaigns/example/junin/mz -g ./campaigns/example/junin/gridList.txt
+  sudo rm -rf run001;  cd $DIR; unset DIR
 fi
 
 #
@@ -135,3 +147,7 @@ fi
 #
 
 rm gutils.sh
+
+#
+#
+#

@@ -23,15 +23,15 @@ var_names = {'SDAT': 'Simulation start date', 'PDAT': 'Planting date', \
              'DRCM': 'Season water drainage', 'SWXM': 'Extractable water at maturity', \
              'NI#M': 'N applications', 'NICM': 'Inorganic N applied', \
              'NFXM': 'N fixed during season (kg/ha)', 'NUCM': 'N uptake during season', \
-             'NLCM': 'N leached during season', 'NIAM': 'Inorganic N at maturity', \
-             'CNAM': 'Tops N at maturity', 'GNAM': 'Grain N at maturity', \
+             'NLCM': 'N leached during season', 'NIAM': 'Inorganic N at maturity', 'NMINC': 'Cumulative seasonal net N mineralization', \
+             'CNAM': 'Tops N at maturity', 'GNAM': 'Grain N at maturity', 'N2OEC': 'Cumulative N2O emissions from soil', \
              'PI#M': 'Number of P applications', 'PICM': 'Inorganic P applied', \
              'PUPC': 'Seasonal cumulative P uptake', 'SPAM': 'Soil P at maturity', \
-             'KI#M': 'Number of K applications', 'KUPC': 'Seasonal cumulative K uptake', \
+             'KI#M': 'Number of K applications', 'KICM': 'Inorganic K applied', 'KUPC': 'Seasonal cumulative K uptake', \
              'SKAM': 'Soil K at maturity', 'RECM': 'Residue applied', \
              'ONTAM': 'Total organic N at maturity, soil and surface', 'ONAM': 'Organic soil N at maturity', \
              'OPTAM': 'Total organic P at maturity, soil and surface', 'OPAM': 'Organic soil P at maturity', \
-             'OCTAM': 'Total organic C at maturity, soil and surface', 'OCAM': 'Organic soil C at maturity', \
+             'OCTAM': 'Total organic C at maturity, soil and surface', 'OCAM': 'Organic soil C at maturity', 'CO2EC': 'Cumulative CO2 emissions from soil', \
              'DMPPM': 'Dry matter-rainfall productivity', 'DMPEM': 'Dry matter-ET productivity', \
              'DMPTM': 'Dry matter-transp. productivity', 'DMPIM': 'Dry matter-irrigation productivity', \
              'YPPM': 'Yield-rainfall productivity', 'YPEM': 'Yield-ET productivity', \
@@ -41,7 +41,8 @@ var_names = {'SDAT': 'Simulation start date', 'PDAT': 'Planting date', \
              'NDCH': 'Number of days from planting to harvest', 'TMAXA': 'Avg maximum air temperature', \
              'TMINA': 'Avg minimum air temperature', 'SRADA': 'Average solar radiation, planting - harvest', \
              'DAYLA': 'Average daylength, planting - harvest', 'CO2A': 'Average atmospheric CO2, planting - harvest', \
-             'PRCP': 'Total season precipitation, planting - harvest', 'ETCP': 'Total evapotransportation, planting - harvest'}
+             'PRCP': 'Total season precipitation, planting - harvest', 'ETCP': 'Total evapotransportation, planting - harvest', \
+             'ESCP': 'Total soil evaporation, planting to harvest', 'EPCP': 'Total transpiration, planting to harvest'}
 var_units = {'SDAT': 'YrDoy', 'PDAT': 'Doy', \
              'EDAT': 'YrDoy', 'ADAT': 'Days since planting', \
              'MDAT': 'Days since planting', 'HDAT': 'YrDoy', \
@@ -57,15 +58,15 @@ var_units = {'SDAT': 'YrDoy', 'PDAT': 'Doy', \
              'DRCM': 'mm', 'SWXM': 'mm', \
              'NI#M': 'no', 'NICM': 'kg [N]/ha', \
              'NFXM': 'kg/ha', 'NUCM': 'kg [N]/ha', \
-             'NLCM': 'kg [N]/ha', 'NIAM': 'kg [N]/ha', \
-             'CNAM': 'kg/ha', 'GNAM': 'kg/ha', \
+             'NLCM': 'kg [N]/ha', 'NIAM': 'kg [N]/ha', 'NMINC': 'kg [N]/ha', \
+             'CNAM': 'kg/ha', 'GNAM': 'kg/ha', 'N2OEC': 'kg [N]/ha', \
              'PI#M': 'no', 'PICM': 'kg/ha', \
              'PUPC': 'kg [P]/ha', 'SPAM': 'kg/ha', \
-             'KI#M': 'no', 'KUPC': 'kg [K]/ha', \
+             'KI#M': 'no', 'KICM': 'kg/ha', 'KUPC': 'kg [K]/ha', \
              'SKAM': 'kg/ha', 'RECM': 'kg/ha', \
              'ONTAM': 'kg/ha', 'ONAM': 'kg/ha', \
              'OPTAM': 'kg/ha', 'OPAM': 'kg/ha', \
-             'OCTAM': 'kg/ha', 'OCAM': 'kg/ha', \
+             'OCTAM': 'kg/ha', 'OCAM': 'kg/ha', 'CO2EC': 'kg [C]/ha', \
              'DMPPM': 'kg [DM]/ha/mm [rain]', 'DMPEM': 'kg [DM]/ha/mm [ET]', \
              'DMPTM': 'kg [DM]/ha/mm [EP]', 'DMPIM': 'kg [DM]/ha/mm [irrig]', \
              'YPPM': 'kg [yield]/ha/mm [rain]', 'YPEM': 'kg [yield]/ha/mm [ET]', \
@@ -75,29 +76,53 @@ var_units = {'SDAT': 'YrDoy', 'PDAT': 'Doy', \
              'NDCH': 'd', 'TMAXA': 'deg C', \
              'TMINA': 'deg C', 'SRADA': 'MJ/m2/d', \
              'DAYLA': 'hr/d', 'CO2A': 'ppm', \
-             'PRCP': 'mm', 'ETCP': 'mm'}
-# WORKS FOR DSSAT VER 4.5.1.023
+             'PRCP': 'mm', 'ETCP': 'mm',
+             'ESCP': 'mm', 'EPCP': 'mm'}
+# WORKS FOR DSSAT VER 4.5 AND VER 4.6
 # NOTE: MAY NEED TO CHANGE FOR FUTURE VERSIONS!
-start_idx = od([('RUNNO', 0), ('TRNO', 9), ('R#', 16), ('O#', 19), ('C#', 22), \
-                ('CR', 25), ('MODEL', 28), ('TNAM', 37), ('FNAM', 63), ('WSTA', 72), \
-                ('SOIL_ID', 81), ('SDAT', 92), ('PDAT', 100), ('EDAT', 108), \
-                ('ADAT', 116), ('MDAT', 124), ('HDAT', 132), ('DWAP', 140), \
-                ('CWAM', 146), ('HWAM', 154), ('HWAH', 162), ('BWAH', 170), \
-                ('PWAM', 178), ('HWUM', 184), ('H#AM', 192), ('H#UM', 198), \
-                ('HIAM', 206), ('LAIX', 212), ('IR#M', 218), ('IRCM', 224), \
-                ('PRCM', 230), ('ETCM', 236), ('EPCM', 242), ('ESCM', 248), 
-                ('ROCM', 254), ('DRCM', 260), ('SWXM', 266), ('NI#M', 272), \
-                ('NICM', 278), ('NFXM', 284), ('NUCM', 290), ('NLCM', 296), \
-                ('NIAM', 302), ('CNAM', 308), ('GNAM', 314), ('PI#M', 320), \
-                ('PICM', 326), ('PUPC', 332), ('SPAM', 338), ('KI#M', 344), \
-                ('KICM', 350), ('KUPC', 356), ('SKAM', 362), ('RECM', 368), \
-                ('ONTAM', 374), ('ONAM', 381), ('OPTAM', 388), ('OPAM', 395), \
-                ('OCTAM', 402), ('OCAM', 410), ('DMPPM', 418), ('DMPEM', 427), \
-                ('DMPTM', 436), ('DMPIM', 445), ('YPPM', 454), ('YPEM', 463), \
-                ('YPTM', 472), ('YPIM', 481), ('DPNAM', 490), ('DPNUM', 499), \
-                ('YPNAM', 508), ('YPNUM', 517), ('NDCH', 526), ('TMAXA', 532), \
-                ('TMINA', 538), ('SRADA', 544), ('DAYLA', 550), ('CO2A', 556), \
-                ('PRCP', 563), ('ETCP', 570)]) # goes to len(data[3]) - 1
+start_idx_v45 = od([('RUNNO', 0), ('TRNO', 9), ('R#', 16), ('O#', 19), ('C#', 22), \
+                    ('CR', 25), ('MODEL', 28), ('TNAM', 37), ('FNAM', 63), ('WSTA', 72), \
+                    ('SOIL_ID', 81), ('SDAT', 92), ('PDAT', 100), ('EDAT', 108), \
+                    ('ADAT', 116), ('MDAT', 124), ('HDAT', 132), ('DWAP', 140), \
+                    ('CWAM', 146), ('HWAM', 154), ('HWAH', 162), ('BWAH', 170), \
+                    ('PWAM', 178), ('HWUM', 184), ('H#AM', 192), ('H#UM', 198), \
+                    ('HIAM', 206), ('LAIX', 212), ('IR#M', 218), ('IRCM', 224), \
+                    ('PRCM', 230), ('ETCM', 236), ('EPCM', 242), ('ESCM', 248), \
+                    ('ROCM', 254), ('DRCM', 260), ('SWXM', 266), ('NI#M', 272), \
+                    ('NICM', 278), ('NFXM', 284), ('NUCM', 290), ('NLCM', 296), \
+                    ('NIAM', 302), ('CNAM', 308), ('GNAM', 314), ('PI#M', 320), \
+                    ('PICM', 326), ('PUPC', 332), ('SPAM', 338), ('KI#M', 344), \
+                    ('KICM', 350), ('KUPC', 356), ('SKAM', 362), ('RECM', 368), \
+                    ('ONTAM', 374), ('ONAM', 381), ('OPTAM', 388), ('OPAM', 395), \
+                    ('OCTAM', 402), ('OCAM', 410), ('DMPPM', 418), ('DMPEM', 427), \
+                    ('DMPTM', 436), ('DMPIM', 445), ('YPPM', 454), ('YPEM', 463), \
+                    ('YPTM', 472), ('YPIM', 481), ('DPNAM', 490), ('DPNUM', 499), \
+                    ('YPNAM', 508), ('YPNUM', 517), ('NDCH', 526), ('TMAXA', 532), \
+                    ('TMINA', 538), ('SRADA', 544), ('DAYLA', 550), ('CO2A', 556), \
+                    ('PRCP', 563), ('ETCP', 570)]) # goes to len(data[3]) - 1
+
+# WORKS FOR DSSAT VER 4.7 AND NEWER
+# NOTE: MAY NEED TO CHANGE FOR FUTURE VERSIONS!
+start_idx_v47 = od([('RUNNO', 0), ('TRNO', 9), ('R#', 16), ('O#', 19), ('C#', 22), \
+                    ('CR', 25), ('MODEL', 28), ('EXNAME', 37), ('TNAM', 46), ('FNAM', 72), ('WSTA', 81), \
+                    ('SOIL_ID', 90), ('SDAT', 101), ('PDAT', 109), ('EDAT', 117), \
+                    ('ADAT', 125), ('MDAT', 133), ('HDAT', 141), ('DWAP', 149), \
+                    ('CWAM', 155), ('HWAM', 163), ('HWAH', 171), ('BWAH', 179), \
+                    ('PWAM', 187), ('HWUM', 193), ('H#AM', 201), ('H#UM', 209), \
+                    ('HIAM', 217), ('LAIX', 223), ('IR#M', 229), ('IRCM', 235), \
+                    ('PRCM', 241), ('ETCM', 247), ('EPCM', 253), ('ESCM', 259), \
+                    ('ROCM', 265), ('DRCM', 271), ('SWXM', 277), ('NI#M', 283), \
+                    ('NICM', 289), ('NFXM', 295), ('NUCM', 301), ('NLCM', 307), \
+                    ('NIAM', 313), ('NMINC', 319), ('CNAM', 325), ('GNAM', 331), ('N2OEC', 337), ('PI#M', 343), \
+                    ('PICM', 349), ('PUPC', 355), ('SPAM', 361), ('KI#M', 367), \
+                    ('KICM', 373), ('KUPC', 379), ('SKAM', 385), ('RECM', 391), \
+                    ('ONTAM', 397), ('ONAM', 404), ('OPTAM', 411), ('OPAM', 418), \
+                    ('OCTAM', 425), ('OCAM', 433), ('CO2EC', 441), ('DMPPM', 449), ('DMPEM', 458), \
+                    ('DMPTM', 467), ('DMPIM', 476), ('YPPM', 485), ('YPEM', 494), \
+                    ('YPTM', 503), ('YPIM', 512), ('DPNAM', 521), ('DPNUM', 530), \
+                    ('YPNAM', 539), ('YPNUM', 548), ('NDCH', 557), ('TMAXA', 563), \
+                    ('TMINA', 569), ('SRADA', 575), ('DAYLA', 581), ('CO2A', 587), \
+                    ('PRCP', 594), ('ETCP', 601), ('ESCP', 608), ('EPCP', 615)]) # goes to len(data[3]) - 1
 
 # parse inputs
 parser = OptionParser()
@@ -116,12 +141,17 @@ parser.add_option("-u", "--units", dest = "units", default = "", type = "string"
 parser.add_option("-d", "--delta", dest = "delta", default = "30", type = "string",
                   help = "Distance(s) between each latitude/longitude grid cell in arcminutes")
 parser.add_option("-r", "--ref_year", dest = "ref_year", default = 1958, type = "int",
-                  help = "Reference year from which to record times")                          
+                  help = "Reference year from which to record times")
 parser.add_option("--latidx", dest = "latidx", default = 1, type = "string",
                   help = "Latitude coordinate")
 parser.add_option("--lonidx", dest = "lonidx", default = 1, type = "string",
                   help = "Longitude coordinate")
+parser.add_option("-V","--dssat_version", dest = "dssat_version", default = 47, type = "int",
+                  help = "DSSAT version")
 (options, args) = parser.parse_args()
+
+# set start_idx according to DSSAT version
+start_idx = start_idx_v45 if options.dssat_version <= 46 else start_idx_v47
 
 # open summary file
 data = open(options.inputfile).readlines()
@@ -146,7 +176,12 @@ if len(units) != len(variables):
 all_variables = list(start_idx.keys())
 
 # search for variables within list of all variables
-prohibited_variables = ['C#', 'CR', 'MODEL', 'TNAM', 'FNAM', 'WSTA', 'SOIL_ID']
+# - DSSAT 4.5 and 4.6
+prohibited_variables_v45 = ['C#', 'CR', 'MODEL', 'TNAM', 'FNAM', 'WSTA', 'SOIL_ID']
+# - DSSAT 4.7 and newer
+prohibited_variables_v47 = ['P#', 'MODEL', 'EXNAME', 'TNAM', 'FNAM', 'WSTA', 'SOIL_ID' ]
+# set prohibited_variables according to DSSAT version
+prohibited_variables = prohibited_variables_v45 if options.dssat_version <= 46 else prohibited_variables_v47
 variable_idx = zeros((len(variables),), dtype=int)
 for i in range(len(variables)):
     v = variables[i]
