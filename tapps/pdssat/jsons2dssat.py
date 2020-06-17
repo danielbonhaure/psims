@@ -107,13 +107,15 @@ class DSSATXFileOutput:
                   'RI': ['p1', 'p2r', 'p5', 'p2o', 'g1', 'g2', 'g3', 'g4', 'eco'], \
                   'SG': ['p1', 'p2', 'p2o', 'p2r', 'panth', 'p3', 'p4', 'p5', 'phint', \
                          'g1', 'g2', 'pbase', 'psat', 'eco'], \
-                  'ML': ['p1', 'p20', 'p2r', 'p5', 'g1', 'g4', 'phint', 'eco']}
+                  'ML': ['p1', 'p20', 'p2r', 'p5', 'g1', 'g4', 'phint', 'eco'], \
+                  'BA': ['p1v', 'p1d', 'p5', 'g1', 'g2', 'g3', 'phint', 'eco']}
     cul_decs = {'MZ': [1, 3, 1, 1, 2, 2, 0], \
                 'SB': [2, 3, 1, 1, 1, 2, 2, 3, 0, 1, 2, 2, 1, 2, 1, 1, 3, 3, 0], \
                 'WH': [0, 0, 0, 0, 0, 2, 0, 0], \
                 'RI': [1, 1, 1, 1, 1, 3, 2, 2, 0], \
                 'SG': [1, 1, 2, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 0], \
-                'ML': [1, 2, 1, 1, 2, 2, 2, 0]}
+                'ML': [1, 2, 1, 1, 2, 2, 2, 0], \
+                'BA': [0, 0, 0, 0, 0, 2, 0, 0]}
 
     def __init__(self, exp_file, soil_file, cul_file, use_ptransfer = True): # need soil file for initial soil conditions
         exp_data = json.load(open(exp_file))
@@ -1115,7 +1117,7 @@ class DSSATXFileOutput:
             return ''
 
         crid2name = {'MZ': 'MAIZE', 'SB': 'SOYBEAN', 'WH': 'WHEAT', 'RI': 'RICE', \
-                     'SC': 'SUGARCANE', 'SG': 'SORGHUM', 'ML': 'MILLET'}
+                     'SC': 'SUGARCANE', 'SG': 'SORGHUM', 'ML': 'MILLET', 'BA': 'BARLEY'}
 
         crid = cu_arr[0]['crid']
         vars = self.cul_params[crid][: -1] # remove eco
