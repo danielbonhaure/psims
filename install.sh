@@ -147,7 +147,7 @@ fi
 #
 #
 
-rm gutils.sh
+rm ${gutils}
 
 #
 #
