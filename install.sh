@@ -5,8 +5,9 @@
 #
 
 # import gutils.sh
-wget --quiet https://raw.githubusercontent.com/danielbonhaure/psims/master/gutils.sh --output-document=gutils.sh
-source gutils.sh; test $? -ne 0 && exit 1
+gutils=$(dirname $(readlink -f $0))/gutils.sh
+wget --quiet https://raw.githubusercontent.com/danielbonhaure/psims/master/gutils.sh --output-document=${gutils}
+source ${gutils}; test $? -ne 0 && exit 1
 
 # print usage help message
 usage() {
@@ -110,7 +111,7 @@ new_script "Instalando pSIMS"
 # Descargar pSIMS
 new_section "Descargando pSIMS"
 [[ -d $PSIMS_FOLDER ]] && sudo rm -rf $PSIMS_FOLDER
-git clone -b remove-dssat-files https://github.com/danielbonhaure/psims.git
+git clone https://github.com/danielbonhaure/psims.git
 test $? -ne 0 && exit 1
 
 # Configurar pSIMS para correr localmente.
