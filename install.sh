@@ -17,7 +17,7 @@ usage() {
   echo -e " -f, --dest-folder <arg>       \t Installation folder absolute path. Default: /opt/psims"
   echo -e " -s, --swift-dest-folder <arg> \t Installation folder absolute path for swift. Default: /opt/swift"
   echo -e " -F, --dssat-folder <arg>      \t DSSAT folder absolute path. Default: /opt/dssat"
-  echo -e " -E, --dssat-executable <arg>  \t DSSAT executable (in DSSAT folder). Default: dscsm047"
+  echo -e " -X, --dssat-executable <arg>  \t DSSAT executable (in DSSAT folder). Default: dscsm047"
   echo -e " -V, --dssat-version <arg>     \t DSSAT version. Default: 47"
   echo -e " -t, --test-installation       \t Auto-run pSIMS after installation is complete."
   echo -e " -h, --help                    \t Display a help message and quit."
@@ -29,7 +29,7 @@ while [[ $# -gt 0 ]]; do
     -f|--dest-folder) PSIMS_FOLDER=$2; SWIFT_FOLDER=${PSIMS_FOLDER%/*}/swift; shift 2;;
     -s|--swift-dest-folder) SWIFT_FOLDER=$2; shift 2;;
     -F|--dssat-folder) DSSAT_FOLDER=$2; shift 2;;
-    -E|--dssat-executable) DSSAT_EXECUTABLE=$2; shift 2;;
+    -X|--dssat-executable) DSSAT_EXECUTABLE=$2; shift 2;;
     -V|--dssat-version) DSSAT_VERSION=$2; shift 2;;
     -t|--test-installation) TEST_INSTALLATION=true; shift 1;;
     -h|--help|*) usage; exit;;
